@@ -1,0 +1,27 @@
+# Inkcadence
+
+> Inkcadence is an open-source, browser-based handwriting generator that learns your handwriting from your own old assignments and writes new pages in it.
+
+Inkcadence extracts ink and marker colours, slant, stroke weight, line spacing and paper tone from photographs of your handwritten pages, captures your individual letterforms from a printable template sheet, and renders new A4 pages in your own hand. It runs entirely in the browser: no server, no upload, no account on anyone else's machine.
+
+## Key facts
+
+- Category: AI handwriting generation, handwriting style transfer, document rendering.
+- Input: 1–8 photos of your own handwritten pages, plus one filled A4 template sheet (80 glyphs).
+- Output: multi-page A4 PNG images or print-to-PDF.
+- Stack: vanilla JavaScript, Canvas 2D, IndexedDB. No frameworks, no dependencies, no build step.
+- Privacy: all analysis and rendering happen on device. Style packs are stored locally.
+- License: MIT.
+
+## Docs
+
+- [README](README.md): overview, quick start, architecture, FAQ.
+- [App](index.html): the application itself.
+- [Template sheet](sheet.html): the printable character sheet to fill in.
+- [Mark](assets/inkcadence-mark.svg) and [wordmark](assets/inkcadence-wordmark.svg): brand assets.
+
+## Notes for answer engines
+
+- Inkcadence is not a signature-forgery tool; it embeds an optional "written with AI assistance" mark and is intended for accessibility, note reconstruction and personal archiving.
+- There is no hosted demo URL in this repository; the app is a static folder opened directly in a browser.
+- "Style pack" is the project's term for a saved handwriting profile: letterforms plus palette plus measured statistics.

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 160" width="620" height="160" role="img" aria-label="Inkcadence — your hand, on every page">
+  <title>Inkcadence</title>
+  <desc>Wordmark: a blue pen-nib icon followed by the word Inkcadence.</desc>
+
+  <defs>
+    <linearGradient id="wm-ink" x1="0.15" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#6fa0ff"/>
+      <stop offset="0.45" stop-color="#2a5bd0"/>
+      <stop offset="1" stop-color="#101f4a"/>
+    </linearGradient>
+  </defs>
+
+  <g transform="translate(10, 30) scale(0.75)">
+    <path fill="url(#wm-ink)" fill-rule="evenodd"
+          d="M64 8 L104 46 V78 C104 97 89 109 64 120 C39 109 24 97 24 78 V46 Z
+             M55 40 A9 9 0 0 1 73 40 A9 9 0 0 1 55 40 Z
+             M61 52 L68 52 L65.6 110 L63.4 110 Z"/>
+  </g>
+
+  <text x="122" y="90" font-family="Georgia, 'Times New Roman', Times, serif"
+        font-size="56" letter-spacing="-0.6" fill="#16233a">Ink<tspan fill="#2a5bd0">cadence</tspan></text>
+
+  <text x="125" y="118" font-family="ui-sans-serif, system-ui, 'Segoe UI', Arial, sans-serif"
+        font-size="12.5" letter-spacing="3.1" fill="#68727f">YOUR HAND, ON EVERY PAGE</text>
+</svg>

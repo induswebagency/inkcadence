@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="assets/inkcadence-mark.svg">
+<link rel="apple-touch-icon" href="assets/inkcadence-mark.svg">
+<title>Inkcadence — write in your own hand</title>
+
+<meta name="description" content="Inkcadence learns your handwriting from your own old assignments and generates new pages in your own hand — same slant, same pen colours, same letterforms, same headings. Runs entirely in your browser; nothing is uploaded.">
+<meta name="keywords" content="handwriting generator, AI handwriting, write in my handwriting, handwriting style transfer, handwritten assignment generator, handwriting font from samples, pen colour detection, browser handwriting synthesis">
+<meta name="author" content="Inkcadence">
+<meta name="theme-color" content="#2f6fed">
+<meta name="robots" content="index, follow, max-image-preview:large">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Inkcadence">
+<meta property="og:title" content="Inkcadence — write in your own hand">
+<meta property="og:description" content="Train on your own old assignments, then generate new pages in your own handwriting. Same ink, same slant, same letterforms. Private by design: it all runs in the browser.">
+<meta property="og:image" content="assets/inkcadence-wordmark.svg">
+<meta property="og:image:alt" content="Inkcadence wordmark — a pen nib beside the name">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Inkcadence — write in your own hand">
+<meta name="twitter:description" content="Learn your handwriting from old pages, then generate new ones in it. Runs locally in your browser.">
+<meta name="twitter:image" content="assets/inkcadence-wordmark.svg">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Inkcadence",
+  "alternateName": "Inkcadence handwriting generator",
+  "applicationCategory": "DesignApplication",
+  "applicationSubCategory": "Handwriting synthesis",
+  "operatingSystem": "Any (web browser)",
+  "description": "Inkcadence learns an individual's handwriting from their own old assignments and generates new pages in that handwriting, preserving slant, stroke weight, ink colours, letterforms and heading style. All processing happens locally in the browser.",
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "featureList": [
+    "Handwriting style extraction from uploaded assignment pages",
+    "Ink and marker colour detection",
+    "Per-character letterform capture from a printable template sheet",
+    "Multi-page A4 assignment rendering with ruled paper",
+    "Local accounts and style packs stored on device",
+    "PNG export and print-to-PDF"
+  ],
+  "license": "https://opensource.org/licenses/MIT",
+  "keywords": "handwriting generator, AI handwriting, handwriting style transfer, handwritten assignment"
+}
+</script>
+<style>
+  :root{
+    --ink:#16233a; --muted:#68727f; --line:#dfe4ea; --bg:#eef1f5;
+    --card:#fff; --accent:#2f6fed; --accent2:#eef3fd; --ok:#177d4f; --bad:#b4232a;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  body{margin:0;font:14px/1.5 system-ui,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg)}
+  h1,h2,h3,h4{margin:0 0 6px;line-height:1.25}
+  p{margin:0 0 10px}
+  button{font:inherit;cursor:pointer;border:0;border-radius:9px;padding:10px 14px;background:var(--accent);color:#fff;font-weight:600}
+  button.ghost{background:#eaeff7;color:#2b4b8f}
+  button.tiny{padding:6px 10px;font-size:12.5px;border-radius:7px}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  input,select,textarea{font:inherit;color:inherit;background:#fbfcfe;border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%}
+  textarea{min-height:190px;resize:vertical;line-height:1.55}
+  a{color:var(--accent)}
+  .muted{color:var(--muted)}
+  .small{font-size:12.5px}
+
+  /* auth */
+  #authView{min-height:100vh;display:grid;place-items:center;padding:24px;background:
+    radial-gradient(900px 500px at 20% 0%,#dfe9fb,transparent),var(--bg)}
+  #authView .card{width:min(430px,100%);background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px;box-shadow:0 18px 50px rgba(20,35,60,.10)}
+  #authView h1{font-size:22px}
+  #authView .field{margin:14px 0}
+  .msg{min-height:18px;font-size:12.5px;margin-top:10px}
+  .msg.bad{color:var(--bad)}
+  .msg.ok{color:var(--ok)}
+
+  /* app shell */
+  #appView{display:grid;grid-template-columns:290px 1fr;min-height:100vh}
+  @media (max-width:900px){#appView{grid-template-columns:1fr}}
+  aside{background:#0f1a2b;color:#c8d3e4;padding:18px;display:flex;flex-direction:column;gap:14px}
+  aside h3{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#7b8aa3;margin:14px 0 4px}
+  aside .who{display:flex;align-items:center;gap:10px}
+  .avatar{width:34px;height:34px;border-radius:50%;background:#2f6fed;display:grid;place-items:center;font-weight:700;color:#fff}
+  aside .plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+  aside .plist li{background:#162437;border:1px solid #223449;border-radius:10px;padding:9px 10px;cursor:pointer;display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:13px}
+  aside .plist li:hover{background:#1b2c42}
+  aside .plist li.active{border-color:#2f6fed;background:#17263c}
+  aside .plist .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+  main{padding:22px 26px 60px;max-width:1000px;width:100%}
+  .tabs{display:flex;gap:8px;margin-bottom:18px;border-bottom:1px solid var(--line);padding-bottom:10px}
+  .tabs button{background:transparent;color:var(--muted);border-radius:8px;padding:8px 14px}
+  .tabs button.on{background:var(--accent2);color:#2b4b8f}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:780px){.grid2{grid-template-columns:1fr}}
+  .drop{border:1.5px dashed #c3cedd;border-radius:12px;padding:14px;background:#fafbfe}
+  .drop h4{font-size:13.5px;margin-bottom:4px}
+  .drop .small{color:var(--muted);margin-bottom:10px}
+  .thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .thumbs img{width:74px;height:auto;border-radius:6px;border:1px solid var(--line);background:#fff}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .field{margin-bottom:12px}
+  .field label{display:block;font-size:12px;font-weight:600;color:#42505f;margin-bottom:5px}
+
+  .swatch{display:flex;gap:8px;flex-wrap:wrap}
+  .swatch button{width:34px;height:34px;border-radius:50%;padding:0;border:2px solid transparent;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
+  .swatch button.on{border-color:#16233a;transform:scale(1.06)}
+
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:12px 0}
+  .stat{background:#f6f8fc;border:1px solid var(--line);border-radius:10px;padding:9px 11px}
+  .stat b{display:block;font-size:16px}
+  .stat span{font-size:11.5px;color:var(--muted)}
+
+  .glyphgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:6px;margin-top:8px}
+  .glyphgrid figure{margin:0;background:#fff;border:1px solid var(--line);border-radius:7px;padding:4px;text-align:center}
+  .glyphgrid img{max-width:100%;height:30px;object-fit:contain;display:block;margin:0 auto}
+  .glyphgrid figcaption{font-size:10px;color:var(--muted);font-family:ui-monospace,monospace}
+
+  canvas.page{width:100%;max-width:620px;height:auto;border-radius:8px;box-shadow:0 12px 34px rgba(20,30,50,.16);display:block;margin:0 auto 18px;background:#fff}
+  .pagebar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+  .hint{background:#f3f7ff;border:1px solid #d8e3fb;border-radius:10px;padding:10px 12px;font-size:12.5px;color:#39496b}
+  .err{background:#fdf1f1;border:1px solid #f2cfcf;color:#8d2222;border-radius:10px;padding:10px 12px;font-size:12.5px;margin-top:10px}
+
+  #sheetWrap{position:relative;margin-top:12px;max-width:520px}
+  #sheetCanvas{width:100%;height:auto;border:1px solid var(--line);border-radius:8px;background:#fff}
+</style>
+</head>
+<body>
+
+<!-- ============ AUTH ============ -->
+<div id="authView">
+  <div class="card">
+    <h1>Inkcadence</h1>
+    <p class="small" style="color:#2f6fed;font-weight:700;margin:-2px 0 10px">Your hand, on every page.</p>
+    <p class="muted small">Train on your own old assignments, then generate new pages in your own hand — same slant, same pen colours, same headings. Everything stays on this device.</p>
+    <div class="field"><label class="small">Username</label><input id="authUser" autocomplete="username" placeholder="e.g. aarav"></div>
+    <div class="field"><label class="small">Password</label><input id="authPass" type="password" autocomplete="current-password" placeholder="at least 4 characters"></div>
+    <div class="row"><button id="btnLogin" style="flex:2">Log in</button><button id="btnSignup" class="ghost" style="flex:1">Create</button></div>
+    <div id="authMsg" class="msg"></div>
+    <p class="muted small" style="margin-top:16px">Local account. Data lives in this browser (IndexedDB / localStorage) and is never uploaded.</p>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="appView" hidden>
+  <aside>
+    <div class="who">
+      <div class="avatar" id="avatar">?</div>
+      <div>
+        <div id="whoami" style="font-weight:700;color:#fff">—</div>
+        <div class="small" style="color:#7b8aa3">local account</div>
+      </div>
+    </div>
+    <h3>Style packs</h3>
+    <ul class="plist" id="packList"></ul>
+    <button class="tiny ghost" id="btnNewPack" style="margin-top:2px">＋ New style pack</button>
+    <div style="flex:1"></div>
+    <button class="tiny ghost" id="btnLogout">Log out</button>
+  </aside>
+
+  <main>
+    <div class="tabs">
+      <button data-tab="train" class="on">1 · Train</button>
+      <button data-tab="write">2 · Write</button>
+    </div>
+
+    <!-- ---------- TRAIN ---------- -->
+    <section id="tabTrain">
+      <div class="card">
+        <h2>Build a style pack</h2>
+        <p class="muted small">Two inputs. Old assignments teach the <b>look</b> (pen colours, slant, stroke weight, spacing). The template sheet teaches the <b>letterforms</b>.</p>
+        <div class="field">
+          <label>Pack name</label>
+          <input id="packName" placeholder="e.g. My blue-pen hand, Nov 2025">
+        </div>
+
+        <div class="grid2">
+          <div class="drop">
+            <h4>A · Old assignments <span class="muted small">(recommended)</span></h4>
+            <div class="small">1–8 photos or scans of pages you actually wrote. Used for pen colours, slant, stroke width and line spacing.</div>
+            <input type="file" id="fileRef" accept="image/*" multiple hidden>
+            <button class="ghost tiny" id="btnPickRef">Choose images</button>
+            <div class="thumbs" id="thumbsRef"></div>
+          </div>
+
+          <div class="drop">
+            <h4>B · Template sheet <span class="muted small">(needed for your real letterforms)</span></h4>
+            <div class="small">Print the sheet, write every character once, then photograph or scan it flat.</div>
+            <div class="row" style="margin:8px 0">
+              <a class="tiny" href="sheet.html" target="_blank" style="text-decoration:underline">Open printable sheet ↗</a>
+            </div>
+            <input type="file" id="fileSheet" accept="image/*" hidden>
+            <button class="ghost tiny" id="btnPickSheet">Upload filled sheet</button>
+            <div id="sheetWrap" hidden>
+              <canvas id="sheetCanvas"></canvas>
+              <div class="small muted" style="margin-top:6px">Drag the four sliders until the grid sits exactly over your writing cells.</div>
+              <div class="grid2" style="gap:6px;margin-top:8px">
+                <div><label class="small muted">Left %</label><input id="gx" type="range" min="0" max="60" value="6"></div>
+                <div><label class="small muted">Top %</label><input id="gy" type="range" min="0" max="70" value="14"></div>
+                <div><label class="small muted">Width %</label><input id="gw" type="range" min="30" max="100" value="88"></div>
+                <div><label class="small muted">Height %</label><input id="gh" type="range" min="20" max="90" value="72"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:16px">
+          <button id="btnBuild">Analyze &amp; save style pack</button>
+          <span class="small muted" id="buildState"></span>
+        </div>
+        <div id="buildMsg"></div>
+      </div>
+
+      <div class="card" id="resultCard" hidden>
+        <h3>Extracted style</h3>
+        <div id="resultBody"></div>
+      </div>
+    </section>
+
+    <!-- ---------- WRITE ---------- -->
+    <section id="tabWrite" hidden>
+      <div class="card">
+        <h2>Write a page</h2>
+        <div class="field">
+          <label>Style pack</label>
+          <select id="wPack"></select>
+        </div>
+        <div class="field">
+          <label>Text — start a line with <code>#</code> for a heading</label>
+          <textarea id="wText"># Assignment 4 — Machine Learning
+Name: ______     Roll: ______
+
+1. Explain the working of a transformer network.
+A transformer uses self attention to weigh every
+token against every other token in the sequence,
+which lets it model long range dependencies in
+parallel rather than step by step.
+
+2. State the difference between supervised and
+unsupervised learning.
+Supervised learning uses labelled data, while
+unsupervised learning finds structure in data
+that has no labels attached.</textarea>
+        </div>
+
+        <div class="grid2">
+          <div>
+            <div class="field">
+              <label>Ink (from your own pages)</label>
+              <div class="swatch" id="wColor"></div>
+            </div>
+            <div class="field">
+              <label>Paper</label>
+              <select id="wPaper">
+                <option value="ruled">Ruled (assignment)</option>
+                <option value="grid">Grid</option>
+                <option value="plain">Plain</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Heading style</label>
+              <select id="wHeading">
+                <option value="underline">Underline</option>
+                <option value="double">Double underline</option>
+                <option value="none">None</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <div class="field">
+              <label>Writing size</label>
+              <input id="wSize" type="range" min="22" max="56" value="34">
+            </div>
+            <div class="field">
+              <label>Natural variation (jitter)</label>
+              <input id="wJitter" type="range" min="0" max="150" value="55">
+            </div>
+            <div class="field">
+              <label>Page seed</label>
+              <input id="wSeed" type="range" min="1" max="99" value="7">
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <button id="btnRender">Render pages</button>
+          <button class="ghost" id="btnPrint">Print / Save as PDF</button>
+          <label class="small muted" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="wMark" checked style="width:auto"> AI watermark</label>
+        </div>
+        <div id="writeMsg"></div>
+      </div>
+
+      <div id="pages"></div>
+    </section>
+  </main>
+</div>
+
+<script src="js/store.js"></script>
+<script src="js/imaging.js"></script>
+<script src="js/glyphs.js"></script>
+<script src="js/render.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

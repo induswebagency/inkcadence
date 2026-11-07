@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inkcadence character sheet — print me</title>
+<style>
+  @page { size: A4 portrait; margin: 10mm; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 10mm; background: #eef1f5;
+    font: 12px/1.4 system-ui, "Segoe UI", Roboto, sans-serif; color: #16233a;
+  }
+  .sheet {
+    width: 190mm; min-height: 277mm; margin: 0 auto; background: #fff;
+    padding: 8mm; box-shadow: 0 10px 40px rgba(20,35,60,.12); border-radius: 4px;
+  }
+  h1 { font-size: 15px; margin: 0 0 2px; }
+  .lead { font-size: 10.5px; color: #5c6672; margin: 0 0 6mm; }
+  .meta { display: flex; gap: 8mm; font-size: 10.5px; color: #444; margin-bottom: 5mm; }
+  .meta span { border-bottom: 1px solid #bbb; flex: 1; padding-bottom: 1mm; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(13, 1fr);
+    gap: 2px;
+  }
+  .cell {
+    position: relative;
+    aspect-ratio: 1 / 1.15;
+    border: 1px solid #cfd7e2;
+    background: #fff;
+    overflow: hidden;
+  }
+  .cell::before {                 /* x-height guide */
+    content: ""; position: absolute; left: 0; right: 0; top: 42%;
+    border-top: 1px dashed #dfe6ef;
+  }
+  .cell::after {                  /* baseline */
+    content: ""; position: absolute; left: 0; right: 0; top: 76%;
+    border-top: 1px solid #c9d4e2;
+  }
+  .tag {
+    position: absolute; left: 2px; top: 1px;
+    font: 7px/1 ui-monospace, monospace; color: #9aa6b5; z-index: 2;
+  }
+  .ghost {                        /* faint tracing guide of the character */
+    position: absolute; inset: 0;
+    display: flex; align-items: flex-end; justify-content: center;
+    padding-bottom: 22%;
+    font-size: 22px; color: #e8edf4; z-index: 1;
+    font-family: Georgia, serif;
+  }
+  .foot { margin-top: 6mm; font-size: 9.5px; color: #78828f; }
+  .bar {
+    max-width: 190mm; margin: 0 auto 6mm; display: flex; gap: 8px; align-items: center;
+  }
+  button {
+    font: inherit; padding: 8px 14px; border-radius: 8px; border: 0;
+    background: #2f6fed; color: #fff; font-weight: 600; cursor: pointer;
+  }
+  .note { font-size: 10.5px; color: #5c6672; }
+  @media print {
+    body { background: #fff; padding: 0; }
+    .bar { display: none; }
+    .sheet { box-shadow: none; width: auto; min-height: 0; margin: 0; padding: 0; }
+    .ghost { color: #eef1f6; }
+  }
+</style>
+</head>
+<body>
+<div class="bar">
+  <button onclick="window.print()">Print this sheet</button>
+  <span class="note">Print at 100% scale, then write one character per cell, sitting on the solid baseline.</span>
+</div>
+
+<div class="sheet">
+  <h1>Inkcadence — character sheet</h1>
+  <p class="lead">
+    Write <b>one character per cell</b> in your normal handwriting, resting on the solid line.
+    Use the same pen you use in your assignments. Don’t try to be neat — write the way you actually write.
+  </p>
+  <div class="meta">
+    <span>Name</span><span>Date</span><span>Pen used</span>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <p class="foot">
+    Tips: fill every cell, including punctuation. If a character comes out badly, cross out the whole cell and
+    write it again in the margin — the analyser reads the cell it finds, so a clean redo matters.
+    Photograph the sheet flat, evenly lit, no shadow across the grid.
+  </p>
+
+  <p class="foot" style="margin-top:3mm;color:#a3acb8">
+    Inkcadence · character sheet v1.0 · your hand, on every page
+  </p>
+</div>
+
+<script src="js/glyphs.js"></script>
+<script>
+(function () {
+  var CHARS = Glyphs.CHARS;
+  var COLS = Glyphs.COLS;
+  var ROWS = Glyphs.ROWS;
+  var grid = document.getElementById('grid');
+  grid.style.gridTemplateColumns = 'repeat(' + COLS + ', 1fr)';
+
+  for (var r = 0; r < ROWS; r++) {
+    for (var c = 0; c < COLS; c++) {
+      var idx = r * COLS + c;
+      var ch = CHARS[idx];
+      var cell = document.createElement('div');
+      cell.className = 'cell';
+      if (!ch) { grid.appendChild(cell); continue; }
+
+      var tag = document.createElement('div');
+      tag.className = 'tag';
+      tag.textContent = (r + 1) + '-' + (c + 1);
+
+      var ghost = document.createElement('div');
+      ghost.className = 'ghost';
+      ghost.textContent = ch;
+
+      cell.appendChild(tag);
+      cell.appendChild(ghost);
+      grid.appendChild(cell);
+    }
+  }
+})();
+</script>
+</body>
+</html>

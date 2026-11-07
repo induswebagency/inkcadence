@@ -1,0 +1,37 @@
+{
+  "name": "inkcadence",
+  "version": "1.0.0",
+  "description": "Learn your handwriting from your own old assignments, then generate new pages in your own hand — same slant, stroke weight, ink colours, letterforms and heading style. Runs entirely in the browser.",
+  "keywords": [
+    "handwriting",
+    "handwriting-generator",
+    "handwriting-synthesis",
+    "handwriting-style-transfer",
+    "ai-handwriting",
+    "handwritten-text",
+    "assignment-generator",
+    "handwriting-font",
+    "ink-detection",
+    "canvas",
+    "vanilla-javascript",
+    "offline-first",
+    "privacy-first",
+    "no-backend"
+  ],
+  "license": "MIT",
+  "private": false,
+  "browser": "index.html",
+  "files": [
+    "index.html",
+    "sheet.html",
+    "js/",
+    "assets/"
+  ],
+  "scripts": {
+    "start": "npx --yes serve . -l 4173",
+    "serve": "npx --yes serve . -l 4173"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}
