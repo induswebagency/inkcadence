@@ -33,7 +33,7 @@
 The frames below are the Vite app, trained on this repo’s sample fixtures: 3 pages, a filled glyph sheet, quality **89/100**, **80/80** letterforms, then a rendered page. The paper stays paper-coloured in both themes.
 
 <p align="center">
-  <img src="docs/media/working.gif" alt="Full Inkcadence walkthrough: home, train, score 89, saved glyphs, rendered page, then dark theme" width="880">
+  <img src="docs/media/working.gif" alt="Inkcadence walkthrough: upload assignment pages, learn the hand, then render a clear lined A4 page" width="880">
 </p>
 
 ### Light and dark
