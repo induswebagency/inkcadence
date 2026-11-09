@@ -163,44 +163,60 @@ var CHARS = 'abcdefghijklmnopqrstuvwxyz' +
     return { glyphs: out, missing: missing, cols: cols, rows: rows };
   }
 
-  /* Find the writing grid by looking for the dense cell-border lattice. */
-  function detectSheetGrid(scan, cols, rows) {
+  /* Quick score: try a spread of cells and count successful extractions. */
+  function scoreSheetGrid(scan, rect, cols, rows, chars) {
     cols = cols || COLS;
     rows = rows || ROWS;
+    chars = chars || CHARS;
+    var cw = rect.w / cols, ch = rect.h / rows;
+    var probes = [
+      0, 1, 2, 12, 13, 14, 25, 26, 27, 38, 39, 40,
+      51, 52, 53, 62, 63, 64, 70, 75, 79
+    ];
+    var hit = 0, tried = 0, i;
+    for (i = 0; i < probes.length; i++) {
+      var idx = probes[i];
+      if (idx >= chars.length) continue;
+      tried++;
+      var r = (idx / cols) | 0, c = idx % cols;
+      if (extractCell(scan, rect.x + c * cw, rect.y + r * ch, cw, ch, true, chars[idx])) hit++;
+    }
+    return tried ? hit / tried : 0;
+  }
+
+  function latticeCandidate(scan, cols, rows) {
     var w = scan.width, h = scan.height;
-    var ctx = scan.getContext('2d');
     var maxDim = 900;
     var s = Math.min(1, maxDim / Math.max(w, h));
     var sw = Math.max(1, Math.round(w * s)), sh = Math.max(1, Math.round(h * s));
     var tmp = baseCanvas(sw, sh);
-    var tctx = tmp.getContext('2d');
-    tctx.drawImage(scan, 0, 0, sw, sh);
-    var data = tctx.getImageData(0, 0, sw, sh).data;
+    tmp.getContext('2d').drawImage(scan, 0, 0, sw, sh);
+    var data = tmp.getContext('2d').getImageData(0, 0, sw, sh).data;
 
     function isEdge(x, y) {
       var i = (y * sw + x) * 4;
       var L = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
-      return L < 210;
+      return L < 205;
     }
 
     var colScore = new Float32Array(sw);
     var rowScore = new Float32Array(sh);
     var x, y;
-    for (y = 0; y < sh; y += 2) {
+    for (y = Math.floor(sh * 0.05); y < sh * 0.98; y += 2) {
       for (x = 0; x < sw; x++) if (isEdge(x, y)) colScore[x]++;
     }
-    for (x = 0; x < sw; x += 2) {
+    for (x = Math.floor(sw * 0.03); x < sw * 0.97; x += 2) {
       for (y = 0; y < sh; y++) if (isEdge(x, y)) rowScore[y]++;
     }
 
-    function peaks(score, count, minGap) {
+    function peaks(score, count, minGap, lo, hi) {
       var sorted = [];
-      for (var i = 0; i < score.length; i++) sorted.push({ i: i, v: score[i] });
+      for (var i = lo; i < hi; i++) sorted.push({ i: i, v: score[i] });
       sorted.sort(function (a, b) { return b.v - a.v; });
       var out = [];
       for (var k = 0; k < sorted.length && out.length < count; k++) {
         var p = sorted[k];
-        if (p.v < 2) break;
+        if (p.v < 3) break;
         var ok = true;
         for (var j = 0; j < out.length; j++) {
           if (Math.abs(out[j] - p.i) < minGap) { ok = false; break; }
@@ -211,30 +227,63 @@ var CHARS = 'abcdefghijklmnopqrstuvwxyz' +
       return out;
     }
 
-    var vPeaks = peaks(colScore, cols + 1, Math.max(6, (sw / (cols + 3)) | 0));
-    var hPeaks = peaks(rowScore, rows + 1, Math.max(6, (sh / (rows + 3)) | 0));
+    var vPeaks = peaks(colScore, cols + 1, Math.max(5, (sw / (cols + 4)) | 0), 0, sw);
+    var hPeaks = peaks(rowScore, rows + 1, Math.max(5, (sh / (rows + 4)) | 0), Math.floor(sh * 0.04), sh);
+    if (vPeaks.length < cols || hPeaks.length < rows) return null;
+    var vx0 = vPeaks[0], vx1 = vPeaks[Math.min(vPeaks.length - 1, cols)];
+    var hy0 = hPeaks[0], hy1 = hPeaks[Math.min(hPeaks.length - 1, rows)];
+    if (vx1 <= vx0 + 20 || hy1 <= hy0 + 20) return null;
+    return {
+      x: vx0 / s,
+      y: hy0 / s,
+      w: (vx1 - vx0) / s,
+      h: (hy1 - hy0) / s
+    };
+  }
 
-    if (vPeaks.length >= cols && hPeaks.length >= rows) {
-      var vx0 = vPeaks[0], vx1 = vPeaks[Math.min(vPeaks.length - 1, cols)];
-      var hy0 = hPeaks[0], hy1 = hPeaks[Math.min(hPeaks.length - 1, rows)];
-      if (vx1 > vx0 + 20 && hy1 > hy0 + 20) {
-        return {
-          x: vx0 / s,
-          y: hy0 / s,
-          w: (vx1 - vx0) / s,
-          h: (hy1 - hy0) / s,
-          confidence: Math.min(1, (vPeaks.length + hPeaks.length) / (cols + rows + 2))
-        };
-      }
+  /* Find the writing grid: score several candidates and keep the best. */
+  function detectSheetGrid(scan, cols, rows) {
+    cols = cols || COLS;
+    rows = rows || ROWS;
+    var w = scan.width, h = scan.height;
+    var candidates = [];
+    var defaults = [
+      { x: w * 0.045, y: h * 0.085, w: w * 0.91, h: h * 0.86 },
+      { x: w * 0.04, y: h * 0.07, w: w * 0.92, h: h * 0.88 },
+      { x: w * 0.05, y: h * 0.1, w: w * 0.9, h: h * 0.84 },
+      { x: 70, y: 160, w: w - 140, h: h - 240 },
+      { x: w * 0.06, y: h * 0.14, w: w * 0.88, h: h * 0.72 }
+    ];
+    var i;
+    for (i = 0; i < defaults.length; i++) candidates.push(defaults[i]);
+
+    var lat = latticeCandidate(scan, cols, rows);
+    if (lat) {
+      candidates.push(lat);
+      candidates.push({ x: lat.x - 8, y: lat.y + 20, w: lat.w + 16, h: lat.h - 10 });
+      candidates.push({ x: lat.x - 15, y: lat.y + 40, w: lat.w + 30, h: lat.h - 20 });
+      candidates.push({ x: lat.x + 5, y: lat.y + 60, w: lat.w - 10, h: lat.h - 40 });
     }
 
-    /* Fallback: printed-sheet defaults matching sheet.html margins. */
+    var best = candidates[0], bestScore = -1;
+    for (i = 0; i < candidates.length; i++) {
+      var c = candidates[i];
+      if (!c || c.w < 40 || c.h < 40) continue;
+      if (c.x < 0) { c.w += c.x; c.x = 0; }
+      if (c.y < 0) { c.h += c.y; c.y = 0; }
+      c.w = Math.min(c.w, w - c.x);
+      c.h = Math.min(c.h, h - c.y);
+      var sc = scoreSheetGrid(scan, c, cols, rows, CHARS);
+      if (sc > bestScore) { bestScore = sc; best = c; }
+      if (sc >= 0.95) break;
+    }
+
     return {
-      x: w * 0.045,
-      y: h * 0.085,
-      w: w * 0.91,
-      h: h * 0.86,
-      confidence: 0.35
+      x: best.x,
+      y: best.y,
+      w: best.w,
+      h: best.h,
+      confidence: Math.max(0.2, Math.min(1, bestScore))
     };
   }
 
@@ -289,6 +338,7 @@ var CHARS = 'abcdefghijklmnopqrstuvwxyz' +
     CHARS: CHARS, COLS: COLS, ROWS: ROWS,
     extractGlyphs: extractGlyphs,
     detectSheetGrid: detectSheetGrid,
+    scoreSheetGrid: scoreSheetGrid,
     rectToPercents: rectToPercents,
     hydrate: hydrate,
     tint: tint,

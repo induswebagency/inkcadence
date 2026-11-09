@@ -140,6 +140,11 @@ var PAGE_W = 1240, PAGE_H = 1754;   /* A4 @ 150 dpi */
 
       var list = m.groups[ch];
       if (!list) {
+        /* Prefer same letter other case before leaving the trained hand. */
+        var alt = ch === ch.toLowerCase() ? ch.toUpperCase() : ch.toLowerCase();
+        list = m.groups[alt];
+      }
+      if (!list) {
         /* Missing glyph: draw a light cursive fallback so words stay readable. */
         ctx.save();
         ctx.font = (size * 0.95) + 'px "Segoe Script", "Ink Free", cursive';

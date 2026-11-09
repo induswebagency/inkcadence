@@ -144,10 +144,28 @@ def make_sheet(path: str, seed: int = 3) -> None:
     print("wrote", path, im.size, "chars", len(CHARS), "grid", COLS, ROWS)
 
 
+def make_sheet_variant(path: str, seed: int = 9, rotate: float = 0.8) -> None:
+    """Slightly rotated / compressed sheet — mimics a phone photo of the printout."""
+    tmp = os.path.join(OUT, "_sheet_tmp.jpg")
+    make_sheet(tmp, seed=seed)
+    im = Image.open(tmp).convert("RGB")
+    im = im.rotate(rotate, resample=Image.BICUBIC, expand=False, fillcolor=(255, 255, 255))
+    # Soft vignette + JPEG generation loss
+    im = im.filter(ImageFilter.GaussianBlur(radius=0.35))
+    im.save(path, quality=78)
+    try:
+        os.remove(tmp)
+    except OSError:
+        pass
+    print("wrote", path, im.size, "rotated", rotate)
+
+
 def main() -> None:
     make_assignment(os.path.join(OUT, "sample_page_1.jpg"), seed=1, ink=(27, 42, 74))
     make_assignment(os.path.join(OUT, "sample_page_2.jpg"), seed=11, ink=(40, 70, 40))
+    make_assignment(os.path.join(OUT, "sample_page_3.jpg"), seed=21, ink=(20, 45, 120))
     make_sheet(os.path.join(OUT, "glyph_sheet.jpg"), seed=5)
+    make_sheet_variant(os.path.join(OUT, "glyph_sheet_photo.jpg"), seed=9, rotate=0.7)
     print("done ->", os.path.abspath(OUT))
 
 

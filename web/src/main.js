@@ -500,14 +500,8 @@ function setGridPercents(p) {
 
 function autoAlignSheetGrid() {
   if (!S.sheetSrc || !Glyphs.detectSheetGrid) return;
-  const fallback = { gx: 4.5, gy: 8.5, gw: 91, gh: 86 };
   const rect = Glyphs.detectSheetGrid(S.sheetSrc, Glyphs.COLS, Glyphs.ROWS);
-  const trial = Glyphs.extractGlyphs(S.sheetSrc, rect, Glyphs.COLS, Glyphs.ROWS, Glyphs.CHARS);
-  if (trial.glyphs.length >= Glyphs.CHARS.length * 0.85) {
-    setGridPercents(Glyphs.rectToPercents(rect, S.sheetSrc.width, S.sheetSrc.height));
-  } else {
-    setGridPercents(fallback);
-  }
+  setGridPercents(Glyphs.rectToPercents(rect, S.sheetSrc.width, S.sheetSrc.height));
 }
 
 function drawSheetPreview() {

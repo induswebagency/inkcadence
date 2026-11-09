@@ -119,14 +119,11 @@ async function main() {
     'missing caps=' + exact.missing.filter((c) => /[A-Z]/.test(c)).join(''));
 
   const detected = sb.Glyphs.detectSheetGrid(sheet, sb.Glyphs.COLS, sb.Glyphs.ROWS);
-  let autoRect = detected;
-  let auto = sb.Glyphs.extractGlyphs(sheet, detected, sb.Glyphs.COLS, sb.Glyphs.ROWS, sb.Glyphs.CHARS);
-  if (auto.glyphs.length < sb.Glyphs.CHARS.length * 0.85) {
-    autoRect = { x: sheet.width * 0.045, y: sheet.height * 0.085, w: sheet.width * 0.91, h: sheet.height * 0.86 };
-    auto = sb.Glyphs.extractGlyphs(sheet, autoRect, sb.Glyphs.COLS, sb.Glyphs.ROWS, sb.Glyphs.CHARS);
-  }
-  console.log('  info glyphs auto-align', auto.glyphs.length, 'missing', auto.missing.join('') || '(none)');
-  check('auto-align extracts most glyphs', auto.glyphs.length >= 72, String(auto.glyphs.length) + '/80');
+  const auto = sb.Glyphs.extractGlyphs(sheet, detected, sb.Glyphs.COLS, sb.Glyphs.ROWS, sb.Glyphs.CHARS);
+  console.log('  info glyphs auto-detect', auto.glyphs.length, 'missing', auto.missing.join('') || '(none)',
+    'score', detected.confidence);
+  check('auto-detect extracts nearly all glyphs', auto.glyphs.length >= 76,
+    String(auto.glyphs.length) + '/80 missing=' + auto.missing.join(''));
 
   const improvedDefaults = {
     x: sheet.width * 0.045,
@@ -137,6 +134,25 @@ async function main() {
   const defs2 = sb.Glyphs.extractGlyphs(sheet, improvedDefaults, sb.Glyphs.COLS, sb.Glyphs.ROWS, sb.Glyphs.CHARS);
   check('updated default grid is close to exact', defs2.glyphs.length >= exact.glyphs.length - 5,
     'exact=' + exact.glyphs.length + ' defaults=' + defs2.glyphs.length + ' oldDefaults=' + defs.glyphs.length);
+
+  /* Photo-like rotated sheet stress case */
+  const photoPath = path.join(FIX, 'glyph_sheet_photo.jpg');
+  if (fs.existsSync(photoPath)) {
+    const photo = await toCanvas(photoPath);
+    const photoDetect = sb.Glyphs.detectSheetGrid(photo, sb.Glyphs.COLS, sb.Glyphs.ROWS);
+    const photoGlyphs = sb.Glyphs.extractGlyphs(photo, photoDetect, sb.Glyphs.COLS, sb.Glyphs.ROWS, sb.Glyphs.CHARS);
+    console.log('  info photo-sheet', photoGlyphs.glyphs.length, 'missing', photoGlyphs.missing.join('') || '(none)');
+    check('photo sheet still extracts most glyphs', photoGlyphs.glyphs.length >= 70,
+      String(photoGlyphs.glyphs.length) + '/80');
+  }
+
+  const page3Path = path.join(FIX, 'sample_page_3.jpg');
+  if (fs.existsSync(page3Path)) {
+    const page3 = await toCanvas(page3Path);
+    const a3 = sb.Imaging.analyze(page3);
+    check('page3 ink ratio sane', a3.inkRatio > 0.001 && a3.inkRatio < 0.2, String(a3.inkRatio));
+    check('page3 finds blue-ish pen', a3.palette.some((p) => p.kind === 'pen'), JSON.stringify(a3.palette.slice(0, 2)));
+  }
 
   await sb.Glyphs.hydrate({ glyphs: exact.glyphs });
 
