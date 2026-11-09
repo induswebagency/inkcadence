@@ -39,7 +39,7 @@
     /* ink level = darkest decile */
     target = n * 0.02; acc = 0; var inkLum = 40;
     for (i = 0; i < 256; i++) { acc += hist[i]; if (acc >= target) { inkLum = i; break; } }
-    if (paper - inkLum < 60) return null;   /* empty cell: only the faint printed guide */
+    if (paper - inkLum < 70) return null;   /* empty cell: only the faint printed guide */
 
     var alpha = new Uint8ClampedArray(n);
     var minX = sw, minY = shh, maxX = -1, maxY = -1, count = 0;
@@ -63,7 +63,7 @@
       }
     }
 
-    if (count < n * 0.004 || maxX < 0) return null;
+    if (count < n * 0.006 || maxX < 0) return null; /* reject near-empty / noise cells */
     if (pad) {
       minX = Math.max(0, minX - 1); minY = Math.max(0, minY - 1);
       maxX = Math.min(sw - 1, maxX + 1); maxY = Math.min(shh - 1, maxY + 1);

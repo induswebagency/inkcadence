@@ -112,35 +112,60 @@
     return list[(r() * list.length) | 0];
   }
 
+  var KERN = { th: -0.12, he: -0.08, in: -0.06, er: -0.1, an: -0.07, re: -0.08, on: -0.06, at: -0.05, en: -0.07, es: -0.05, of: -0.08, to: -0.06 };
+  var LIGATURES = { fi: true, fl: true, ff: true, tt: true, ll: true };
+
+  function glyphJitterProfile(ch) {
+    if ('bdfhklt'.indexOf(ch) >= 0) return { rot: 0.7, dy: 0.85, dx: 1.0 };
+    if ('gjpqy'.indexOf(ch) >= 0) return { rot: 0.85, dy: 1.15, dx: 0.9 };
+    if ('iw'.indexOf(ch) >= 0) return { rot: 1.1, dy: 1.0, dx: 1.2 };
+    return { rot: 1, dy: 1, dx: 1 };
+  }
+
+  function pairKern(a, b, size) {
+    if (!a || !b) return 0;
+    var key = a + b;
+    if (KERN[key]) return KERN[key] * size;
+    if (LIGATURES[key]) return -0.14 * size;
+    return 0;
+  }
+
   function drawGlyphLine(ctx, line, x0, baseline, m, colour, jitter, r, size) {
     var drift = gauss(r) * jitter * 3.2;
     var tilt = gauss(r) * jitter * 0.006;
     var x = x0 + gauss(r) * jitter * 5;
+    var prev = '';
 
     for (var i = 0; i < line.length; i++) {
       var ch = line[i];
-      if (ch === ' ') { x += size * 0.34 * (0.75 + r() * 0.7); continue; }
+      if (ch === ' ') { x += size * 0.34 * (0.75 + r() * 0.7); prev = ''; continue; }
 
       var list = m.groups[ch];
-      if (!list) { x += size * 0.5; continue; }
+      if (!list) { x += size * 0.5; prev = ch; continue; }
+
+      x += pairKern(prev, ch, size);
 
       var g = pickVariant(list, r);
+      var jp = glyphJitterProfile(ch);
       var sc = m.scale * (1 + gauss(r) * jitter * 0.10);
-      var rot = tilt + gauss(r) * jitter * 0.055;
-      var dy = drift + gauss(r) * jitter * size * 0.07;
-      var dx = gauss(r) * jitter * size * 0.03;
+      var rot = tilt + gauss(r) * jitter * 0.055 * jp.rot;
+      var dy = drift + gauss(r) * jitter * size * 0.07 * jp.dy;
+      var dx = gauss(r) * jitter * size * 0.03 * jp.dx;
       var shear = 0.10 + gauss(r) * jitter * 0.05;
+      var lig = LIGATURES[prev + ch];
+      if (lig) { dx -= size * 0.04; shear += 0.02; }
 
       ctx.save();
       ctx.translate(x + dx, baseline + dy);
       ctx.rotate(rot);
       ctx.transform(1, 0, shear, 1, 0, 0);
-      ctx.globalAlpha = 0.82 + r() * 0.18;
+      ctx.globalAlpha = (lig ? 0.9 : 0.82) + r() * 0.18;
       ctx.drawImage(global.Glyphs.tint(g, colour), 0, -g.by * sc, g.w * sc, g.h * sc);
       ctx.restore();
       ctx.globalAlpha = 1;
 
       x += g.adv * m.scale + m.tracking + gauss(r) * jitter * 1.8;
+      prev = ch;
     }
     return x;
   }
@@ -269,9 +294,22 @@
     ctx.textAlign = 'left';
   }
 
+  function exportPrintDocument(pages, title) {
+    var imgs = pages.map(function (c) {
+      return '<img src="' + c.toDataURL('image/jpeg', 0.92) + '">';
+    }).join('');
+    return '<!doctype html><html><head><title>' + (title || 'Inkcadence') + '</title><style>' +
+      '@page{size:A4;margin:0}body{margin:0;background:#fff}' +
+      'img{display:block;width:210mm;height:297mm;page-break-after:always}' +
+      '</style></head><body>' + imgs + '</body></html>';
+  }
+
   global.Rendering = {
     renderPages: renderPages,
+    exportPrintDocument: exportPrintDocument,
     PAGE_W: PAGE_W,
-    PAGE_H: PAGE_H
+    PAGE_H: PAGE_H,
+    pairKern: pairKern,
+    glyphJitterProfile: glyphJitterProfile
   };
 })(window);

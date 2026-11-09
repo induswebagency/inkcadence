@@ -191,13 +191,16 @@
 
   /* ------------------------------------------------------------------- auth */
 
-  function signup(name, password) {
+  function signup(name, password, email) {
     name = (name || '').trim().toLowerCase();
     password = password || '';
+    email = email ? String(email).trim().toLowerCase() : undefined;
 
     if (MODE === 'remote') {
+      var body = { username: name, password: password };
+      if (email) body.email = email;
       return api('/api/auth/signup', {
-        method: 'POST', tokenMode: true, body: { username: name, password: password }
+        method: 'POST', tokenMode: true, body: body
       }).then(function (d) {
         if (!d.token) throw new Error('The server did not return a session token.');
         setToken(d.token);

@@ -213,16 +213,60 @@
     return rgbToHex(r / n, g / n, b / n);
   }
 
+  function deskewGray(gray, w, h, slant) {
+    if (!slant || Math.abs(slant) < 0.02) return { gray: gray, w: w, h: h };
+    var out = new Uint8ClampedArray(w * h);
+    for (var y = 0; y < h; y++) {
+      var shift = slant * y;
+      for (var x = 0; x < w; x++) {
+        var sx = x - shift;
+        var x0 = sx | 0;
+        if (x0 < 0 || x0 >= w - 1) continue;
+        var t = sx - x0;
+        out[y * w + x] = gray[y * w + x0] * (1 - t) + gray[y * w + x0 + 1] * t;
+      }
+    }
+    return { gray: out, w: w, h: h };
+  }
+
+  function strokeConfidence(ink, w, h, strokeWidth) {
+    var runs = [];
+    for (var y = 0; y < h; y += 4) {
+      var run = 0;
+      for (var x = 0; x < w; x++) {
+        if (ink[y * w + x]) run++;
+        else { if (run > 0 && run < 50) runs.push(run); run = 0; }
+      }
+    }
+    if (runs.length < 20) return 0.35;
+    var mean = 0;
+    for (var i = 0; i < runs.length; i++) mean += runs[i];
+    mean /= runs.length;
+    var varSum = 0;
+    for (i = 0; i < runs.length; i++) {
+      var d = runs[i] - mean;
+      varSum += d * d;
+    }
+    var sd = Math.sqrt(varSum / runs.length);
+    var cv = mean ? sd / mean : 1;
+    var near = Math.abs(mean - strokeWidth) < 3 ? 1 : 0.7;
+    return Math.max(0.2, Math.min(1, (1 - Math.min(1, cv)) * near));
+  }
+
   function analyze(srcCanvas) {
     var g = toGrayscale(srcCanvas, 1400);
     var th = otsu(g.hist);
     var ink = inkMask(g.gray, g.w, g.h, th);
+    var slant = estimateSlant(ink, g.w, g.h);
+    var deskewed = deskewGray(g.gray, g.w, g.h, slant);
+    var ink2 = inkMask(deskewed.gray, deskewed.w, deskewed.h, th);
 
     var inkCount = 0;
-    for (var i = 0; i < ink.length; i++) inkCount += ink[i];
+    for (var i = 0; i < ink2.length; i++) inkCount += ink2[i];
 
-    var lines = estimateLines(ink, g.w, g.h);
+    var lines = estimateLines(ink2, deskewed.w, deskewed.h);
     var palette = clusterColors(g.data, g.w, g.h);
+    var strokeWidth = estimateStroke(ink2, deskewed.w, deskewed.h);
 
     var thumb = canvas(420, 420 * g.h / g.w);
     thumb.getContext('2d').drawImage(g.canvas, 0, 0, thumb.width, thumb.height);
@@ -231,9 +275,10 @@
       width: srcCanvas.width,
       height: srcCanvas.height,
       threshold: th,
-      inkRatio: +(inkCount / ink.length).toFixed(4),
-      slant: +estimateSlant(ink, g.w, g.h).toFixed(3),
-      strokeWidth: estimateStroke(ink, g.w, g.h),
+      inkRatio: +(inkCount / ink2.length).toFixed(4),
+      slant: +slant.toFixed(3),
+      strokeWidth: strokeWidth,
+      strokeConfidence: +strokeConfidence(ink2, deskewed.w, deskewed.h, strokeWidth).toFixed(3),
       lineGap: lines.gap,
       lineBands: lines.bands,
       paper: paperColour(g.data, g.w, g.h),
@@ -247,12 +292,15 @@
     if (!list.length) throw new Error('No pages analysed.');
     var byHex = {}, slants = [], strokes = [], gaps = [], ratios = [];
     var paperVotes = {};
+    var confs = [];
     list.forEach(function (a) {
       slants.push(a.slant); strokes.push(a.strokeWidth); gaps.push(a.lineGap); ratios.push(a.inkRatio);
+      if (a.strokeConfidence != null) confs.push(a.strokeConfidence);
       paperVotes[a.paper] = (paperVotes[a.paper] || 0) + 1;
       a.palette.forEach(function (c) {
         var e = byHex[c.hex] || (byHex[c.hex] = { hex: c.hex, kind: c.kind, share: 0, hits: 0 });
         e.share += c.share; e.hits++;
+        if (!e.kind || e.kind === 'faint') e.kind = c.kind;
       });
     });
     function median(arr) {
@@ -260,15 +308,18 @@
       return arr[(arr.length * 0.5) | 0];
     }
     var palette = Object.keys(byHex).map(function (k) { return byHex[k]; })
-      .sort(function (a, b) { return b.share - a.share; })
+      .sort(function (a, b) { return (b.hits - a.hits) || (b.share - a.share); })
       .slice(0, 6)
-      .map(function (c) { return { hex: c.hex, kind: c.kind, share: Math.round(c.share / list.length) }; });
+      .map(function (c) {
+        return { hex: c.hex, kind: c.kind, share: Math.round(c.share / list.length), pages: c.hits };
+      });
 
     var paper = Object.keys(paperVotes).sort(function (a, b) { return paperVotes[b] - paperVotes[a]; })[0];
     return {
       pages: list.length,
       slant: +median(slants.slice()).toFixed(3),
       strokeWidth: median(strokes.slice()),
+      strokeConfidence: confs.length ? +median(confs.slice()).toFixed(3) : 0.5,
       lineGap: median(gaps.slice()),
       inkRatio: +median(ratios.slice()).toFixed(4),
       paper: paper || '#fdfcf7',
@@ -283,6 +334,8 @@
     analyze: analyze,
     mergeAnalyses: mergeAnalyses,
     toGrayscale: toGrayscale,
-    otsu: otsu
+    otsu: otsu,
+    deskewGray: deskewGray,
+    strokeConfidence: strokeConfidence
   };
 })(window);

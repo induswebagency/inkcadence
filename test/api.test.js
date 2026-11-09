@@ -54,6 +54,9 @@ async function main() {
   console.log('\n-- health + static exposure --');
   let r = await req('GET', '/api/health');
   check('health 200', r.status === 200 && r.body.ok === true, JSON.stringify(r.body));
+  check('health reports redis', typeof r.body.redis === 'string', JSON.stringify(r.body));
+  check('health reports ml', typeof r.body.ml === 'string', JSON.stringify(r.body));
+  check('health deployMode', r.body.deployMode === 'selfhost' || r.body.deployMode === 'saas', JSON.stringify(r.body));
 
   r = await req('GET', '/');
   check('index.html served at / with 200', r.status === 200 && typeof r.body._raw === 'string', 'status ' + r.status);
@@ -206,6 +209,23 @@ async function main() {
   check('delete 200', r.status === 200 && r.body.ok === true, JSON.stringify(r.body));
   r = await req('GET', '/api/packs/' + packId, { headers: auth });
   check('gone after delete', r.status === 404);
+
+  console.log('\n-- password reset hooks --');
+  r = await req('POST', '/api/auth/request-password-reset', { body: { email: 'nobody@example.com' } });
+  check('reset request always 200', r.status === 200 && r.body.ok === true, JSON.stringify(r.body));
+
+  console.log('\n-- billing plans (selfhost) --');
+  r = await req('GET', '/api/billing/plans');
+  check('plans endpoint', r.status === 200 && Array.isArray(r.body.plans), JSON.stringify(r.body));
+
+  console.log('\n-- pack neural train queue (no ML) --');
+  r = await req('POST', '/api/packs', { headers: auth, body: { name: 'Neural later', data: { glyphs: [] } } });
+  check('create pack for train', r.status === 201, JSON.stringify(r.body).slice(0, 160));
+  const trainPackId = r.body.pack && r.body.pack.id;
+  r = await req('POST', '/api/packs/' + trainPackId + '/train-model', { headers: auth });
+  check('train-model accepted 202', r.status === 202 && r.body.modelStatus === 'queued', JSON.stringify(r.body));
+  r = await req('POST', '/api/packs/' + trainPackId + '/infer', { headers: auth, body: { text: 'hi', renderMode: 'auto' } });
+  check('infer falls back classical', r.status === 200 && (r.body.mode === 'classical' || r.body.fallback === true), JSON.stringify(r.body));
 
   console.log('\n-- unknown api route --');
   r = await req('GET', '/api/nonsense');
