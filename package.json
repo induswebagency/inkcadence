@@ -1,7 +1,7 @@
 {
   "name": "inkcadence",
-  "version": "1.0.0",
-  "description": "Learn your handwriting from your own old assignments, then generate new pages in your own hand — same slant, stroke weight, ink colours, letterforms and heading style. Runs entirely in the browser.",
+  "version": "2.0.0",
+  "description": "Learn your handwriting from your own old assignments, then generate new pages in your own hand — classical glyph synthesis with optional neural personalization. Self-host or SaaS.",
   "keywords": [
     "handwriting",
     "handwriting-generator",
@@ -13,10 +13,10 @@
     "handwriting-font",
     "ink-detection",
     "canvas",
-    "vanilla-javascript",
+    "vite",
     "offline-first",
     "privacy-first",
-    "no-backend"
+    "self-hosted"
   ],
   "license": "MIT",
   "private": false,
@@ -33,14 +33,22 @@
     "index.html",
     "sheet.html",
     "js/",
-    "assets/"
+    "assets/",
+    "web/",
+    "server/",
+    "ml/"
   ],
   "scripts": {
     "start": "node server/index.js",
     "dev": "node server/dev.js",
     "dev:watch": "node --watch server/dev.js",
+    "dev:web": "npm run dev --prefix web",
+    "build": "npm run build --prefix web",
+    "build:web": "npm run build --prefix web",
     "migrate": "node server/migrate.js",
-    "test": "node test/api.test.js && node test/frontend.test.js",
+    "test": "node test/api.test.js && node test/frontend.test.js && node test/engine.test.js",
+    "test:api": "node test/api.test.js",
+    "lint": "node --check server/app.js && node --check server/auth.js && node --check server/packs.js && node --check web/src/main.js",
     "serve:static": "npx --yes serve . -l 4173"
   },
   "engines": {
@@ -48,7 +56,12 @@
   },
   "dependencies": {
     "express": "^4.19.2",
+    "ioredis": "^5.4.1",
     "pg": "^8.12.0"
+  },
+  "optionalDependencies": {
+    "nodemailer": "^6.9.14",
+    "stripe": "^16.2.0"
   },
   "devDependencies": {
     "pg-mem": "^3.0.14"

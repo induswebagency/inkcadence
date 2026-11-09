@@ -16,19 +16,73 @@ services:
       timeout: 5s
       retries: 10
 
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   api:
     build: .
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       DATABASE_URL: postgres://inkcadence:inkcadence@db:5432/inkcadence
+      REDIS_URL: redis://redis:6379/0
       PORT: "8080"
       COOKIE_SECURE: "0"
       PG_POOL_MAX: "5"
+      DEPLOY_MODE: selfhost
+      ML_URL: http://ml:8090
+      ML_CALLBACK_SECRET: ${ML_CALLBACK_SECRET:-dev-ml-secret}
+      API_PUBLIC_URL: http://api:8080
+      MAX_PACKS_PER_USER: "25"
     ports:
       - "8080:8080"
 
+  ml:
+    profiles: ["ml"]
+    build: ./ml
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      ML_ARTIFACT_DIR: /app/artifacts
+      ML_CALLBACK_SECRET: ${ML_CALLBACK_SECRET:-dev-ml-secret}
+      PORT: "8090"
+    volumes:
+      - mlartifacts:/app/artifacts
+    ports:
+      - "8090:8090"
+
+  minio:
+    profiles: ["saas"]
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: inkcadence
+      MINIO_ROOT_PASSWORD: inkcadence_secret
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - miniodata:/data
+
 volumes:
   pgdata:
+  redisdata:
+  mlartifacts:
+  miniodata:

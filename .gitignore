@@ -5,7 +5,10 @@ Thumbs.db
 .idea/
 .vscode/
 dist/
+web/dist/
+ml/artifacts/
 *.local
+js/imaging.esm.bak
 
 logo-options.html
 assets/concepts/

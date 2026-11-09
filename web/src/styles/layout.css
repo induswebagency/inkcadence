@@ -1,0 +1,256 @@
+/* Marketing / auth surfaces — brand-first, full-bleed paper field */
+.marketing {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+.marketing-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px clamp(16px, 4vw, 40px);
+}
+
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--ink);
+}
+.brand-mark strong {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  letter-spacing: -0.03em;
+}
+
+.hero {
+  display: grid;
+  place-items: center;
+  padding: clamp(24px, 6vw, 72px) clamp(16px, 4vw, 40px) 48px;
+  position: relative;
+  overflow: hidden;
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 8% 5% auto;
+  height: min(58vh, 520px);
+  border-radius: 28px;
+  background:
+    linear-gradient(135deg, rgba(47, 111, 237, 0.18), transparent 55%),
+    linear-gradient(0deg, rgba(250, 247, 240, 0.2), transparent),
+    url('../assets/hero-paper.svg') center/cover no-repeat;
+  filter: saturate(1.05);
+  z-index: 0;
+}
+.hero-inner {
+  position: relative;
+  z-index: 1;
+  width: min(720px, 100%);
+  text-align: center;
+  animation: inkRise 0.7s ease both;
+}
+.hero-brand {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 8vw, 5.2rem);
+  line-height: 0.95;
+  margin: 0 0 12px;
+  color: var(--ink);
+}
+.hero-brand span { color: var(--accent); }
+.hero p {
+  font-size: clamp(1.05rem, 2.2vw, 1.25rem);
+  color: var(--ink-soft);
+  max-width: 34em;
+  margin: 0 auto 22px;
+}
+.hero-cta { justify-content: center; }
+
+.auth-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+.auth-panel {
+  width: min(440px, 100%);
+  padding: 28px;
+  animation: inkRise 0.5s ease both;
+}
+.auth-panel .brand {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  margin: 8px 0 4px;
+}
+.auth-panel .tag {
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+/* App shell */
+.app-shell {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 100vh;
+}
+@media (max-width: 900px) {
+  .app-shell { grid-template-columns: 1fr; }
+}
+
+.sidebar {
+  background:
+    linear-gradient(180deg, #101926 0%, #162437 100%);
+  color: #c8d3e4;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.sidebar h3 {
+  font-family: var(--font-body);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #7b8aa3;
+  margin: 14px 0 4px;
+  font-weight: 700;
+}
+.sidebar .who { display: flex; align-items: center; gap: 10px; }
+.avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--accent);
+  display: grid; place-items: center;
+  font-weight: 700; color: #fff;
+}
+.plist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.plist li {
+  background: #162437;
+  border: 1px solid #223449;
+  border-radius: 10px;
+  padding: 9px 10px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+}
+.plist li:hover { background: #1b2c42; }
+.plist li.active { border-color: var(--accent); background: #17263c; }
+.plist .dot { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; }
+
+.workspace {
+  padding: 22px clamp(16px, 3vw, 28px) 60px;
+  max-width: 1040px;
+  width: 100%;
+}
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 10px;
+}
+.tabs button {
+  background: transparent;
+  color: var(--muted);
+  border-radius: 8px;
+  padding: 8px 14px;
+  box-shadow: none;
+}
+.tabs button.on { background: var(--accent-soft); color: var(--accent-deep); }
+.tabs button:hover { transform: none; }
+
+.drop {
+  border: 1.5px dashed #c3cedd;
+  border-radius: 12px;
+  padding: 14px;
+  background: rgba(255, 253, 248, 0.7);
+}
+.thumbs { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.thumbs img, .thumbs canvas {
+  width: 74px; height: auto; border-radius: 6px;
+  border: 1px solid var(--line); background: #fff;
+}
+.swatch { display: flex; gap: 8px; flex-wrap: wrap; }
+.swatch button {
+  width: 34px; height: 34px; border-radius: 50%; padding: 0;
+  border: 2px solid transparent; box-shadow: inset 0 0 0 1px rgba(0,0,0,.12);
+}
+.swatch button.on { border-color: var(--ink); transform: scale(1.06); }
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin: 12px 0;
+}
+.stat {
+  background: rgba(246, 248, 252, 0.9);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 9px 11px;
+}
+.stat b { display: block; font-size: 16px; font-family: var(--font-display); }
+.stat span { font-size: 11.5px; color: var(--muted); }
+
+.glyphgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(46px, 1fr));
+  gap: 6px;
+  margin-top: 8px;
+}
+.glyphgrid figure {
+  margin: 0; background: #fff; border: 1px solid var(--line);
+  border-radius: 7px; padding: 4px; text-align: center;
+}
+.glyphgrid img { max-width: 100%; height: 30px; object-fit: contain; display: block; margin: 0 auto; }
+.glyphgrid figcaption { font-size: 10px; color: var(--muted); font-family: ui-monospace, monospace; }
+
+canvas.page {
+  width: 100%; max-width: 620px; height: auto;
+  border-radius: 8px;
+  box-shadow: 0 12px 34px rgba(20, 30, 50, 0.16);
+  display: block; margin: 0 auto 18px; background: #fff;
+}
+.pagebar {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 10px; margin-bottom: 10px; flex-wrap: wrap;
+}
+
+.wizard-steps {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;
+}
+.wizard-steps .step {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #ece7dc;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.wizard-steps .step.on { background: var(--accent); color: #fff; }
+.wizard-steps .step.done { background: #d7ebdf; color: var(--ok); }
+
+.meter {
+  height: 10px; border-radius: 999px; background: #e6e0d4; overflow: hidden; margin: 8px 0 4px;
+}
+.meter > span {
+  display: block; height: 100%; background: linear-gradient(90deg, var(--accent), #5b8fff);
+  width: 0%; transition: width 0.35s ease;
+}
+
+.qa-score {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: var(--accent);
+}
+
+.legal {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 40px 20px 80px;
+}

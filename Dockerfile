@@ -1,17 +1,21 @@
-FROM node:20-alpine
+# Build Vite web app, then run the hardened Express API.
+FROM node:20-alpine AS web
+WORKDIR /web
+COPY web/package.json web/package-lock.json* ./
+RUN npm install --no-audit --no-fund
+COPY web/ ./
+RUN npm run build
 
+FROM node:20-alpine
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Install deps first so a source edit does not bust the dependency layer.
-# npm ci needs package-lock.json, which is committed for reproducible builds.
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --no-audit --no-fund
 
 COPY . .
+COPY --from=web /web/dist ./web/dist
 
-# Run as the unprivileged user that the node image already ships.
 USER node
-
 EXPOSE 8080
 CMD ["node", "server/index.js"]

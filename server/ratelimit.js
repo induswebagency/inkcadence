@@ -1,15 +1,12 @@
 'use strict';
 
 const { ApiError } = require('./validate');
+const { getRedis, redisUrl } = require('./redis');
 
-// Sliding-window limiter held in process memory.
-//
-// Fine for a single VPS process and for one serverless instance, but it is
-// per-process: behind several workers the effective limit multiplies. If this
-// ever needs to be exact, move the counters into Postgres or Redis.
+// Sliding-window limiter. Uses Redis when REDIS_URL is set; otherwise process memory.
 const buckets = new Map();
 
-function hit(key, limit, windowMs) {
+function hitMemory(key, limit, windowMs) {
   const now = Date.now();
   const cutoff = now - windowMs;
   let stamps = buckets.get(key);
@@ -31,7 +28,39 @@ function hit(key, limit, windowMs) {
   stamps.push(now);
 }
 
-// Keeps the map from growing without bound on a long-lived process.
+async function hitRedis(key, limit, windowMs) {
+  const redis = await getRedis();
+  if (!redis) {
+    hitMemory(key, limit, windowMs);
+    return;
+  }
+
+  const now = Date.now();
+  const redisKey = 'rl:' + key;
+  const multi = redis.multi();
+  multi.zremrangebyscore(redisKey, 0, now - windowMs);
+  multi.zcard(redisKey);
+  multi.zadd(redisKey, now, String(now) + ':' + Math.random());
+  multi.pexpire(redisKey, windowMs);
+  const results = await multi.exec();
+  const count = results && results[1] ? Number(results[1][1]) : 0;
+
+  if (count >= limit) {
+    const retryAfter = Math.ceil(windowMs / 1000);
+    const err = new ApiError(429, 'rate_limited', 'Too many attempts. Try again in ' + retryAfter + 's.');
+    err.retryAfter = retryAfter;
+    throw err;
+  }
+}
+
+async function hit(key, limit, windowMs) {
+  if (redisUrl()) {
+    await hitRedis(key, limit, windowMs);
+  } else {
+    hitMemory(key, limit, windowMs);
+  }
+}
+
 const sweeper = setInterval(() => {
   const cutoff = Date.now() - 15 * 60000;
   for (const entry of buckets) {
@@ -50,12 +79,9 @@ function clientIp(req) {
 
 function limiter(limit, windowMs) {
   return function (req, _res, next) {
-    try {
-      hit(req.method + ':' + req.baseUrl + req.path + ':' + clientIp(req), limit, windowMs);
-      next();
-    } catch (err) {
-      next(err);
-    }
+    hit(req.method + ':' + req.baseUrl + req.path + ':' + clientIp(req), limit, windowMs)
+      .then(() => next())
+      .catch((err) => next(err));
   };
 }
 

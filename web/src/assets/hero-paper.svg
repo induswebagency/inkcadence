@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="p" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f7f2e8"/>
+      <stop offset="1" stop-color="#ebe3d3"/>
+    </linearGradient>
+    <linearGradient id="ink" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#8fb6ff"/>
+      <stop offset=".5" stop-color="#2f6fed"/>
+      <stop offset="1" stop-color="#16307a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="700" fill="url(#p)"/>
+  <g stroke="rgba(120,160,200,.28)" stroke-width="1">
+    <path d="M80 140 H1120"/><path d="M80 190 H1120"/><path d="M80 240 H1120"/>
+    <path d="M80 290 H1120"/><path d="M80 340 H1120"/><path d="M80 390 H1120"/>
+    <path d="M80 440 H1120"/><path d="M80 490 H1120"/><path d="M80 540 H1120"/>
+  </g>
+  <path d="M120 80 V620" stroke="rgba(214,120,120,.45)" stroke-width="2" fill="none"/>
+  <path fill="none" stroke="url(#ink)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"
+        stroke-dasharray="240" pathLength="240"
+        d="M220 420 C300 420 320 220 420 220 C520 220 500 500 620 500 C740 500 760 260 920 260"/>
+</svg>
