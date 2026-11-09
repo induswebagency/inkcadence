@@ -1,0 +1,9 @@
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+pydantic==2.8.2
+redis==5.0.7
+httpx==0.27.0
+pillow==10.4.0
+numpy==1.26.4
+# torch is optional for CPU personalization; install separately for GPU:
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
