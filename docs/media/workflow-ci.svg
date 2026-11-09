@@ -1,15 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="280" viewBox="0 0 1200 280" role="img" aria-labelledby="title desc">
-  <title id="title">Inkcadence GitHub workflows</title>
-  <desc id="desc">Push to main runs tests and Docker builds, then the Pages workflow publishes the landing site and app.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="280" viewBox="0 0 1200 280" role="img" aria-label="Inkcadence GitHub workflows">
+  <title>Inkcadence GitHub workflows</title>
   <rect width="1200" height="280" rx="24" fill="#0e1622"/>
   <text x="36" y="42" font-family="Georgia, serif" font-size="20" fill="#e7eef8">GitHub workflows</text>
-  <g font-family="Segoe UI, Source Sans 3, sans-serif">
+  <g font-family="Segoe UI, Arial, sans-serif">
     <rect x="36" y="68" width="250" height="168" rx="16" fill="#152232" stroke="#2c3e58"/>
     <text x="56" y="100" font-size="13" fill="#9ec0ff" font-weight="700">ON PUSH TO MAIN</text>
     <text x="56" y="132" font-size="16" fill="#fff" font-weight="700">CI</text>
-    <text x="56" y="160" font-size="13" fill="#c5d2e4">npm test · lint</text>
+    <text x="56" y="160" font-size="13" fill="#c5d2e4">npm test and lint</text>
     <text x="56" y="182" font-size="13" fill="#c5d2e4">Vite production build</text>
-    <text x="56" y="204" font-size="13" fill="#c5d2e4">API image · ML image</text>
+    <text x="56" y="204" font-size="13" fill="#c5d2e4">API image and ML image</text>
 
     <rect x="330" y="68" width="280" height="168" rx="16" fill="#152232" stroke="#2c3e58"/>
     <text x="350" y="100" font-size="13" fill="#9ec0ff" font-weight="700">AFTER CI ON MAIN</text>
@@ -20,10 +19,10 @@
 
     <rect x="654" y="68" width="510" height="168" rx="16" fill="#1a3058" stroke="#4d86ff"/>
     <text x="674" y="100" font-size="13" fill="#d7e6ff" font-weight="700">PUBLISHED SITE</text>
-    <text x="674" y="136" font-size="16" fill="#fff" font-weight="700">mafzalkalwardev.github.io/inkcadence</text>
-    <text x="674" y="168" font-size="14" fill="#e7eef8">/  landing · SEO, AEO, GEO, FAQ</text>
-    <text x="674" y="192" font-size="14" fill="#e7eef8">/app/  train and write, light and dark</text>
-    <text x="674" y="216" font-size="14" fill="#e7eef8">/media/  screenshots and walkthrough GIF</text>
+    <text x="674" y="136" font-size="16" fill="#fff" font-weight="700">github.io/inkcadence</text>
+    <text x="674" y="168" font-size="14" fill="#e7eef8">/ landing, FAQ, and screenshots</text>
+    <text x="674" y="192" font-size="14" fill="#e7eef8">/app/ train and write, light and dark</text>
+    <text x="674" y="216" font-size="14" fill="#e7eef8">/media/ screenshots and walkthrough</text>
   </g>
   <g fill="none" stroke="#8fb4ff" stroke-width="2.4" stroke-linecap="round">
     <path d="M286 152 H330"/>
