@@ -175,10 +175,16 @@
   }
 
   function mapPack(row) {
-    var p = (row.data && typeof row.data === 'object') ? row.data : {};
+    var p = (row.data && typeof row.data === 'object') ? JSON.parse(JSON.stringify(row.data)) : {};
     p.id = row.id;
     p.name = row.name;
     p.updatedAt = row.updatedAt;
+    if (row.modelStatus != null) p.modelStatus = row.modelStatus;
+    if (row.model_status != null) p.modelStatus = row.model_status;
+    if (row.renderMode != null) p.renderMode = row.renderMode;
+    if (row.render_mode != null) p.renderMode = row.render_mode;
+    if (row.modelUri != null) p.modelUri = row.modelUri;
+    if (row.model_uri != null) p.modelUri = row.model_uri;
     return p;
   }
 
@@ -331,6 +337,7 @@
   global.Store = {
     ready: ready,
     mode: function () { return MODE; },
+    token: getToken,
     get: get, set: set, del: del,
     signup: signup, login: login, currentUser: currentUser, logout: logout,
     packs: packs, savePack: savePack, deletePack: deletePack,

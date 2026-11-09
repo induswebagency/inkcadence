@@ -298,8 +298,10 @@ var CHARS = 'abcdefghijklmnopqrstuvwxyz' +
 
   var tintCache = Object.create(null);
 
-  function tint(glyph, colour) {
-    var key = glyph.url.length + ':' + glyph.url.slice(-18) + '|' + colour;
+  function tint(glyph, colour, opts) {
+    opts = opts || {};
+    var bleed = opts.bleed || 0;
+    var key = glyph.url.length + ':' + glyph.url.slice(-18) + '|' + colour + '|b' + (bleed > 0.2 ? '1' : '0');
     var hit = tintCache[key];
     if (hit) return hit;
 
@@ -309,6 +311,14 @@ var CHARS = 'abcdefghijklmnopqrstuvwxyz' +
     ctx.fillRect(0, 0, glyph.w, glyph.h);
     ctx.globalCompositeOperation = 'destination-in';
     if (glyph._img && glyph._img.complete) ctx.drawImage(glyph._img, 0, 0);
+    /* Soft pressure fringe without changing glyph bounds. */
+    if (bleed > 0.25 && glyph._img && glyph._img.complete) {
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = 0.18 * Math.min(1, bleed);
+      ctx.drawImage(c, 0.6, 0);
+      ctx.drawImage(c, -0.6, 0);
+      ctx.globalAlpha = 1;
+    }
     tintCache[key] = c;
     return c;
   }

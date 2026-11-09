@@ -101,8 +101,6 @@ def _train_job(req: TrainRequest) -> None:
     _callback(req.callbackUrl, {"jobId": req.jobId, "packId": req.packId, "status": "running"})
 
     try:
-        # Lightweight personalization: style embedding + glyph inventory metadata.
-        # Full PyTorch fine-tune is optional when torch is installed.
         vec = _style_vector(req.stats, req.glyphs)
         metrics = {
             "glyphCount": len(req.glyphs),
@@ -112,39 +110,18 @@ def _train_job(req: TrainRequest) -> None:
         }
 
         try:
-            import torch  # type: ignore
-            import torch.nn as nn  # type: ignore
+            from stroke_vae import train_vae
 
-            class TinyStyleNet(nn.Module):
-                def __init__(self):
-                    super().__init__()
-                    self.net = nn.Sequential(
-                        nn.Linear(5, 32),
-                        nn.Tanh(),
-                        nn.Linear(32, 5),
-                    )
-
-                def forward(self, x):
-                    return self.net(x)
-
-            model = TinyStyleNet()
-            opt = torch.optim.Adam(model.parameters(), lr=1e-2)
-            target = torch.tensor([vec], dtype=torch.float32)
-            for _ in range(40):
-                opt.zero_grad()
-                pred = model(target)
-                loss = ((pred - target) ** 2).mean()
-                loss.backward()
-                opt.step()
-            metrics["backend"] = "torch-tinystyle-v1"
-            metrics["loss"] = float(loss.detach().cpu())
-            ckpt = {
-                "state_dict": {k: v.tolist() for k, v in model.state_dict().items()},
-                "vector": vec,
-                "glyphs": [{"ch": g.get("ch"), "adv": g.get("adv"), "w": g.get("w"), "h": g.get("h")} for g in req.glyphs[:200]],
-            }
-        except Exception:
-            ckpt = {"vector": vec, "glyphs": [{"ch": g.get("ch")} for g in req.glyphs[:200]]}
+            ckpt = train_vae(req.glyphs[:240], vec, epochs=60)
+            metrics.update(ckpt.get("metrics") or {})
+            ckpt["vector"] = vec
+            ckpt["glyphs"] = [
+                {"ch": g.get("ch"), "adv": g.get("adv"), "w": g.get("w"), "h": g.get("h")}
+                for g in req.glyphs[:200]
+            ]
+        except Exception as train_exc:
+            metrics["strokeError"] = str(train_exc)
+            ckpt = {"vector": vec, "glyphs": [{"ch": g.get("ch")} for g in req.glyphs[:200]], "kind": "embedding"}
 
         out = ARTIFACT_DIR / f"{req.packId}.json"
         out.write_text(json.dumps(ckpt), encoding="utf-8")
@@ -295,19 +272,41 @@ def get_model(pack_id: str):
 def infer(req: InferRequest):
     with LOCK:
         model = MODELS.get(req.packId)
+    ckpt: Dict[str, Any] = {}
     if not model and req.modelUri:
         model = {"status": "ready", "modelUri": req.modelUri, "metrics": {}}
+    if model and model.get("modelUri"):
         try:
-            data = json.loads(Path(req.modelUri).read_text(encoding="utf-8"))
-            model["metrics"] = {"embedding": data.get("vector") or []}
+            ckpt = json.loads(Path(model["modelUri"]).read_text(encoding="utf-8"))
+            model["metrics"] = model.get("metrics") or ckpt.get("metrics") or {
+                "embedding": ckpt.get("vector") or []
+            }
         except Exception:
-            pass
+            ckpt = {}
     if not model or model.get("status") != "ready":
-        # Caller should classical-fallback.
-        return {"pages": None, "fallback": True}
+        return {"pages": None, "glyphs": None, "fallback": True}
+
+    glyphs = None
+    try:
+        from stroke_vae import sample_variants
+
+        if ckpt.get("kind") == "stroke-vae" or ckpt.get("means") or ckpt.get("state_dict"):
+            per = int((req.options or {}).get("variantsPerChar") or 3)
+            glyphs = sample_variants(ckpt, per_char=per)
+    except Exception as exc:
+        glyphs = None
+        model.setdefault("metrics", {})["sampleError"] = str(exc)
+
+    if glyphs:
+        return {
+            "pages": None,
+            "glyphs": glyphs,
+            "fallback": False,
+            "metrics": model.get("metrics"),
+        }
 
     pages = _render_pages(req.text, req.options or {}, model)
-    return {"pages": pages, "fallback": False, "metrics": model.get("metrics")}
+    return {"pages": pages, "glyphs": None, "fallback": False, "metrics": model.get("metrics")}
 
 
 def main():

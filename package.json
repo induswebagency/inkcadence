@@ -46,12 +46,13 @@
     "build": "npm run build --prefix web",
     "build:web": "npm run build --prefix web",
     "migrate": "node server/migrate.js",
-    "test": "node test/api.test.js && node test/frontend.test.js && node test/engine.test.js && node test/pipeline.test.js",
+    "test": "node test/api.test.js && node test/frontend.test.js && node test/engine.test.js && node test/pipeline.test.js && node test/realism.test.js",
     "test:api": "node test/api.test.js",
     "test:pipeline": "node test/pipeline.test.js",
     "fixtures:samples": "python scripts/make_sample_handwriting.py",
     "lint": "node --check server/app.js && node --check server/auth.js && node --check server/packs.js && node --check web/src/main.js",
-    "serve:static": "npx --yes serve . -l 4173"
+    "serve:static": "npx --yes serve . -l 4173",
+    "sync:engines": "node scripts/sync_engines_to_web.js"
   },
   "engines": {
     "node": ">=18"

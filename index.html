@@ -354,8 +354,9 @@
         <div class="drop">
           <h4>Old assignment pages</h4>
           <div class="small">1–8 photos or scans of full pages you wrote — headings, numbered answers, everything. Used to learn your ink colours, slant, stroke weight, line spacing and neatness.</div>
-          <input type="file" id="fileRef" accept="image/*" multiple hidden>
-          <button class="ghost tiny" id="btnPickRef">Upload assignment pages</button>
+          <input type="file" id="fileRef" accept="image/*" capture="environment" multiple hidden>
+          <button class="ghost tiny" id="btnPickRef">Upload / camera</button>
+          <div class="small muted" style="margin-top:6px">On phone, this opens the camera. Optional: mark each thumb as heading or body.</div>
           <div class="thumbs" id="thumbsRef"></div>
         </div>
 
@@ -367,7 +368,7 @@
             <div class="row" style="margin:8px 0">
               <a class="tiny" href="sheet.html" target="_blank" style="text-decoration:underline">Open printable sheet ↗</a>
             </div>
-            <input type="file" id="fileSheet" accept="image/*" hidden>
+            <input type="file" id="fileSheet" accept="image/*" capture="environment" hidden>
             <button class="ghost tiny" id="btnPickSheet">Upload filled sheet</button>
             <div id="sheetWrap" hidden>
               <canvas id="sheetCanvas"></canvas>
@@ -403,6 +404,20 @@
           <label>Style pack</label>
           <select id="wPack"></select>
         </div>
+        <div class="grid2">
+          <div class="field">
+            <label>Layout preset</label>
+            <select id="wLayout"></select>
+          </div>
+          <div class="field">
+            <label>Writer mode</label>
+            <select id="wMode">
+              <option value="auto">Auto</option>
+              <option value="classical">Classical</option>
+              <option value="neural">Neural (needs API)</option>
+            </select>
+          </div>
+        </div>
         <div class="field">
           <label>Text — start a line with <code>#</code> for a heading</label>
           <textarea id="wText"># Assignment 4 — Machine Learning
@@ -419,6 +434,9 @@ unsupervised learning.
 Supervised learning uses labelled data, while
 unsupervised learning finds structure in data
 that has no labels attached.</textarea>
+          <div class="row" style="margin-top:8px">
+            <button type="button" class="ghost tiny" id="btnFormatText">Format assignment</button>
+          </div>
         </div>
 
         <div class="grid2">
@@ -457,12 +475,23 @@ that has no labels attached.</textarea>
               <label>Page seed</label>
               <input id="wSeed" type="range" min="1" max="99" value="7">
             </div>
+            <label class="small muted" style="display:flex;gap:6px;align-items:center;margin-top:8px">
+              <input type="checkbox" id="wContinuity" checked style="width:auto"> Same-hand continuity across pages
+            </label>
+            <label class="small muted" style="display:flex;gap:6px;align-items:center;margin-top:6px">
+              <input type="checkbox" id="wPageNums" checked style="width:auto"> Page numbers
+            </label>
           </div>
         </div>
 
         <div class="row">
           <button id="btnRender">Render pages</button>
-          <button class="ghost" id="btnPrint">Print / Save as PDF</button>
+          <button class="ghost" id="btnExportPdf">Download PDF</button>
+          <button class="ghost" id="btnPrint">Print</button>
+          <button class="ghost tiny" id="btnSharePack">Export style pack</button>
+          <button class="ghost tiny" id="btnImportPack">Import style pack</button>
+          <input type="file" id="filePack" accept=".inkpack,.txt,application/json,text/plain" hidden>
+          <button class="ghost tiny" id="btnTrainNeural">Train neural</button>
           <label class="small muted" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="wMark" checked style="width:auto"> AI watermark</label>
         </div>
         <div id="writeMsg"></div>
@@ -477,6 +506,9 @@ that has no labels attached.</textarea>
 <script src="js/store.js"></script>
 <script src="js/imaging.js"></script>
 <script src="js/glyphs.js"></script>
+<script src="js/harvest.js"></script>
+<script src="js/assignment.js"></script>
+<script src="js/packshare.js"></script>
 <script src="js/render.js"></script>
 <script src="js/presets.js"></script>
 <script src="js/app.js"></script>

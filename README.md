@@ -15,7 +15,9 @@
 <p align="center">
   <a href="https://mafzalkalwardev.github.io/inkcadence/"><b>▶ Live site</b></a>
   &nbsp;·&nbsp;
-  <a href="https://mafzalkalwardev.github.io/inkcadence/app/#/"><b>Open the app</b></a>
+  <a href="https://mafzalkalwardev.github.io/inkcadence/classic/"><b>Classic writer</b></a>
+  &nbsp;·&nbsp;
+  <a href="https://mafzalkalwardev.github.io/inkcadence/app/#/"><b>Vite app</b></a>
   &nbsp;·&nbsp;
   <a href="SELFHOST.md">Self-host</a>
   &nbsp;·&nbsp;

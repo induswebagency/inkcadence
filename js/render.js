@@ -112,8 +112,12 @@
     return list[(r() * list.length) | 0];
   }
 
-  var KERN = { th: -0.12, he: -0.08, in: -0.06, er: -0.1, an: -0.07, re: -0.08, on: -0.06, at: -0.05, en: -0.07, es: -0.05, of: -0.08, to: -0.06 };
-  var LIGATURES = { fi: true, fl: true, ff: true, tt: true, ll: true };
+  var KERN = {
+    th: -0.12, he: -0.08, in: -0.06, er: -0.1, an: -0.07, re: -0.08, on: -0.06, at: -0.05,
+    en: -0.07, es: -0.05, of: -0.08, to: -0.06, or: -0.06, ed: -0.07, is: -0.05, it: -0.05,
+    ar: -0.06, as: -0.05, be: -0.05, by: -0.04, wa: -0.05, we: -0.05, wh: -0.08, yo: -0.05
+  };
+  var LIGATURES = { fi: true, fl: true, ff: true, tt: true, ll: true, ti: true, ft: true, oo: true, ee: true };
 
   function glyphJitterProfile(ch) {
     if ('bdfhklt'.indexOf(ch) >= 0) return { rot: 0.7, dy: 0.85, dx: 1.0 };
@@ -130,11 +134,27 @@
     return 0;
   }
 
-  function drawGlyphLine(ctx, line, x0, baseline, m, colour, jitter, r, size) {
+  function drawJoin(ctx, x0, y0, x1, y1, colour, r) {
+    ctx.save();
+    ctx.strokeStyle = colour;
+    ctx.lineWidth = 1.1 + r() * 0.7;
+    ctx.globalAlpha = 0.35 + r() * 0.25;
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    var mx = (x0 + x1) / 2;
+    var my = (y0 + y1) / 2 + (r() - 0.5) * 3;
+    ctx.quadraticCurveTo(mx, my, x1, y1);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawGlyphLine(ctx, line, x0, baseline, m, colour, jitter, r, size, bleed) {
     var drift = gauss(r) * jitter * 3.2;
     var tilt = gauss(r) * jitter * 0.006;
     var x = x0 + gauss(r) * jitter * 5;
     var prev = '';
+    var prevEndX = x;
+    var prevEndY = baseline;
 
     for (var i = 0; i < line.length; i++) {
       var ch = line[i];
@@ -142,12 +162,10 @@
 
       var list = m.groups[ch];
       if (!list) {
-        /* Prefer same letter other case before leaving the trained hand. */
         var alt = ch === ch.toLowerCase() ? ch.toUpperCase() : ch.toLowerCase();
         list = m.groups[alt];
       }
       if (!list) {
-        /* Missing glyph: draw a light cursive fallback so words stay readable. */
         ctx.save();
         ctx.font = (size * 0.95) + 'px "Segoe Script", "Ink Free", cursive';
         ctx.fillStyle = colour;
@@ -174,15 +192,23 @@
       var lig = LIGATURES[prev + ch];
       if (lig) { dx -= size * 0.04; shear += 0.02; }
 
+      var drawX = x + dx;
+      var drawY = baseline + dy;
+      if (prev && prev !== ' ' && (lig || (x - prevEndX) < size * 0.22)) {
+        drawJoin(ctx, prevEndX, prevEndY - size * 0.08, drawX + g.w * sc * 0.1, drawY - g.by * sc * 0.35, colour, r);
+      }
+
       ctx.save();
-      ctx.translate(x + dx, baseline + dy);
+      ctx.translate(drawX, drawY);
       ctx.rotate(rot);
       ctx.transform(1, 0, shear, 1, 0, 0);
       ctx.globalAlpha = (lig ? 0.9 : 0.82) + r() * 0.18;
-      ctx.drawImage(global.Glyphs.tint(g, colour), 0, -g.by * sc, g.w * sc, g.h * sc);
+      ctx.drawImage(global.Glyphs.tint(g, colour, { bleed: bleed || 0 }), 0, -g.by * sc, g.w * sc, g.h * sc);
       ctx.restore();
       ctx.globalAlpha = 1;
 
+      prevEndX = drawX + g.adv * m.scale * 0.85;
+      prevEndY = drawY;
       x += g.adv * m.scale + m.tracking + gauss(r) * jitter * 1.8;
       prev = ch;
     }
@@ -244,12 +270,21 @@
     var tracking = opts.tracking != null ? opts.tracking : (pack.tracking != null ? pack.tracking : 0.8);
     var headingStyle = opts.headingStyle || pack.headingStyle || 'underline';
     var watermark = opts.watermark !== false;
+    var continuity = opts.continuity !== false;
+    var pageNumbers = !!opts.pageNumbers;
     var shearBase = (pack.slant != null ? pack.slant : (pack.stats && pack.stats.slant)) || 0.1;
     shearBase = Math.max(-0.2, Math.min(0.35, 0.08 + shearBase));
+    var bleed = opts.bleed;
+    if (bleed == null) {
+      var sw = pack.strokeWidth || (pack.stats && pack.stats.strokeWidth) || 2.5;
+      bleed = Math.max(0.15, Math.min(1.2, sw / 4));
+    }
 
     var W = PAGE_W, H = PAGE_H;
-    var marginL = 136, marginR = W - 104;
-    var top = 196, bottom = H - 118;
+    var marginL = opts.marginL != null ? opts.marginL : 136;
+    var marginR = opts.marginR != null ? opts.marginR : (W - 104);
+    var top = opts.top != null ? opts.top : 196;
+    var bottom = opts.bottom != null ? opts.bottom : (H - 118);
     var letterGap = Math.round(size * 1.68);
     var ruleGap = pack.lineGap && pack.lineGap > 8 ? Math.round(size * 1.68) : letterGap;
 
@@ -259,15 +294,32 @@
 
     var pages = [];
     var page = null, ctx = null, y = 0, pageIndex = 0;
+    var handDrift = 0;
+    var handShear = shearBase;
+    var baseSeed = opts.seed || 1;
 
     function newPage() {
       page = newCanvas(W, H);
       ctx = page.getContext('2d');
-      var pr = makeRng((opts.seed || 1) + pageIndex * 7919);
+      var step = continuity ? (pageIndex * 7919) : (pageIndex * 1543 + ((baseSeed * 17) | 0));
+      var pr = makeRng(baseSeed + step);
       drawPaper(ctx, W, H, paperStyle, paperColour, ruleGap, pr);
+      if (pageNumbers) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(40,50,70,.35)';
+        ctx.font = '14px Georgia, serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(String(pageIndex + 1), W / 2, H - 48);
+        ctx.restore();
+        ctx.textAlign = 'left';
+      }
       pages.push(page);
       pageIndex++;
       y = top;
+      if (continuity) {
+        handDrift += (pr() - 0.5) * 1.2;
+        handShear += (pr() - 0.5) * 0.008;
+      }
       return pr;
     }
 
@@ -284,14 +336,16 @@
 
       var fs = ln.heading ? size * 1.18 : size;
       var lineW;
+      var lineJitter = jitter;
+      var lineShear = handShear;
 
       if (m.groups) {
         var mm = buildMetrics(pack, fs, tracking);
-        lineW = drawGlyphLine(ctx, ln.text, marginL, y + fs, mm, colour, jitter, r, fs);
+        lineW = drawGlyphLine(ctx, ln.text, marginL + handDrift, y + fs, mm, colour, lineJitter, r, fs, bleed);
       } else {
-        drawFontLine(ctx, ln.text, marginL, y + fs, family, fs, colour, jitter, r, shearBase);
+        drawFontLine(ctx, ln.text, marginL + handDrift, y + fs, family, fs, colour, lineJitter, r, lineShear);
         ctx.font = fs + 'px ' + family;
-        lineW = marginL + ctx.measureText(ln.text).width;
+        lineW = marginL + handDrift + ctx.measureText(ln.text).width;
       }
 
       if (ln.heading && headingStyle !== 'none') {
@@ -303,6 +357,30 @@
 
     if (watermark) stamp(ctx, W, H);
     return pages;
+  }
+
+  function previewLine(opts) {
+    var pack = opts.pack || {};
+    var text = (opts.text || 'The quick brown fox writes neatly.').slice(0, 64);
+    var size = opts.size || 30;
+    var colour = opts.penColour || (pack.penColours && pack.penColours[0]) || '#1b2a4a';
+    var jitter = opts.jitter != null ? opts.jitter : (pack.defaultJitter || 0.4);
+    var family = pack.fontFamily || '"Segoe Script","Ink Free",cursive';
+    var tracking = pack.tracking != null ? pack.tracking : 0.55;
+    var bleed = Math.max(0.15, Math.min(1, (pack.strokeWidth || 2.5) / 4));
+    var shearBase = pack.slant != null ? pack.slant : 0.1;
+    var c = newCanvas(720, 90);
+    var ctx = c.getContext('2d');
+    ctx.fillStyle = pack.paper || '#fdfcf7';
+    ctx.fillRect(0, 0, c.width, c.height);
+    var r = makeRng(opts.seed || 3);
+    var m = buildMetrics(pack, size, tracking);
+    if (m.groups) {
+      drawGlyphLine(ctx, text, 24, 58, m, colour, jitter, r, size, bleed);
+    } else {
+      drawFontLine(ctx, text, 24, 58, family, size, colour, jitter, r, 0.08 + shearBase);
+    }
+    return c;
   }
 
   function stamp(ctx, W, H) {
@@ -328,6 +406,7 @@
 
   global.Rendering = {
     renderPages: renderPages,
+    previewLine: previewLine,
     exportPrintDocument: exportPrintDocument,
     PAGE_W: PAGE_W,
     PAGE_H: PAGE_H,

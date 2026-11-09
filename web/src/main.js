@@ -4,6 +4,10 @@ import { Store } from './lib/store.js';
 import { Imaging } from './lib/imaging.js';
 import { Glyphs } from './lib/glyphs.js';
 import { Rendering } from './lib/render.js';
+import { Presets } from './lib/presets.js';
+import { Harvest } from './lib/harvest.js';
+import { Assignment } from './lib/assignment.js';
+import { PackShare } from './lib/packshare.js';
 import { packQuality, tryPhrase } from './lib/qa.js';
 import { INKCADENCE_CONFIG } from './lib/config.js';
 
@@ -425,7 +429,7 @@ When a neural model is ready for this pack, Auto mode uses it and falls back sil
       <div>
         <div class="field"><label>Ink</label><div class="swatch" id="wColor"></div></div>
         <div class="field"><label>Paper</label>
-          <select id="wPaper"><option value="ruled">Ruled</option><option value="grid">Grid</option><option value="plain">Plain</option></select>
+          <select id="wPaper"><option value="ruled">Lined A4</option><option value="plain">Blank A4</option><option value="grid">Grid A4</option></select>
         </div>
         <div class="field"><label>Heading style</label>
           <select id="wHeading"><option value="underline">Underline</option><option value="double">Double</option><option value="none">None</option></select>
@@ -614,21 +618,43 @@ function buildDraftPack() {
     cellH = rect.h / Glyphs.ROWS;
     cellW = rect.w / Glyphs.COLS;
   }
+  let harvested = [];
+  if (S.refImages.length) {
+    harvested = Harvest.harvestFromPages(S.refImages, { maxCrops: 100, maxPerChar: 4 });
+    glyphs = Harvest.mergeVariants(glyphs, harvested);
+    if (harvested[0]) {
+      cellH = harvested[0].cellH || cellH;
+      cellW = harvested[0].cellW || cellW;
+    }
+  }
   if (!stats) {
     stats = {
       pages: 0, slant: 0.1, strokeWidth: 3, lineGap: Math.round(cellH * 1.7),
       inkRatio: 0, paper: '#fdfcf7', palette: [{ hex: '#1b2a4a', kind: 'pen', share: 100 }], thumbs: [],
     };
   }
+  const base = Presets.matchFromStats(stats);
   let pens = stats.palette.filter((c) => c.kind !== 'faint').map((c) => c.hex);
-  if (!pens.length) pens = ['#1b2a4a'];
+  if (!pens.length) pens = (base.penColours || ['#1b2a4a']).slice();
+  const scored = Assignment.styleScore(stats);
   const pack = {
     id: 'pk_' + Date.now().toString(36),
     name,
     created: Date.now(),
     cellH, cellW, glyphs, missing, stats,
+    harvestedCount: harvested.length,
     penColours: pens.slice(0, 4),
     paper: stats.paper,
+    slant: stats.slant,
+    strokeWidth: stats.strokeWidth,
+    lineGap: stats.lineGap || base.lineGap,
+    fontFamily: glyphs.length ? null : base.fontFamily,
+    headingStyle: base.headingStyle,
+    defaultJitter: base.defaultJitter,
+    tracking: base.tracking,
+    baseStyleId: base.id,
+    baseStyleName: base.name,
+    styleScore: scored.score,
     renderMode: 'auto',
   };
   S.draftPack = pack;
@@ -817,21 +843,42 @@ function wireApp() {
           });
           if (res.ok) {
             const data = await res.json();
-            if (data.mode === 'neural' && data.pages?.length) neuralPages = data.pages;
+            if (data.glyphs?.length) {
+              const neuralPack = { ...pack, glyphs: data.glyphs, fontFamily: null };
+              await Glyphs.hydrate(neuralPack);
+              neuralPages = Rendering.renderPages({
+                text: $('#wText').value,
+                pack: neuralPack,
+                size: +$('#wSize').value,
+                jitter: +$('#wJitter').value / 100,
+                seed: +$('#wSeed').value,
+                penColour: S.pen || pack.penColours?.[0] || '#1b2a4a',
+                paper: $('#wPaper').value,
+                paperColour: pack.paper || '#fdfcf7',
+                headingStyle: $('#wHeading').value,
+                watermark: $('#wMark').checked,
+                continuity: true,
+                pageNumbers: true,
+              });
+            } else if (data.pages?.length) {
+              neuralPages = data.pages;
+            }
           }
         } catch { /* classical fallback */ }
       }
 
       let pages;
-      if (neuralPages) {
-        pages = neuralPages.map((dataUrl) => {
+      if (Array.isArray(neuralPages) && neuralPages[0] && neuralPages[0].getContext) {
+        pages = neuralPages;
+        card($('#writeMsg'), 'Rendered with neural glyph atlas.');
+      } else if (Array.isArray(neuralPages) && typeof neuralPages[0] === 'string') {
+        const imgs = neuralPages.map((dataUrl) => {
           const img = new Image();
           img.src = dataUrl;
           return img;
         });
-        // Wait for decode then paint to canvas for print/download parity.
-        await Promise.all(pages.map((img) => new Promise((r) => { img.onload = r; img.onerror = r; })));
-        pages = pages.map((img) => {
+        await Promise.all(imgs.map((img) => new Promise((r) => { img.onload = r; img.onerror = r; })));
+        pages = imgs.map((img) => {
           const c = document.createElement('canvas');
           c.width = img.naturalWidth || Rendering.PAGE_W;
           c.height = img.naturalHeight || Rendering.PAGE_H;
@@ -852,6 +899,10 @@ function wireApp() {
           paperColour: pack.paper || '#fdfcf7',
           headingStyle: $('#wHeading').value,
           watermark: $('#wMark').checked,
+          fontFamily: pack.fontFamily,
+          tracking: pack.tracking,
+          continuity: true,
+          pageNumbers: true,
         });
         card($('#writeMsg'), mode === 'neural' ? 'ML unavailable — classical fallback.' : '');
       }

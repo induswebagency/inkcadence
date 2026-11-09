@@ -31,11 +31,16 @@ jobs:
         run: npm test
       - name: Build the browser app
         run: npm run build --prefix web
+      - name: Sync engines into web
+        run: node scripts/sync_engines_to_web.js
       - name: Assemble the Pages site
         run: |
-          mkdir -p _site/app
+          mkdir -p _site/app _site/classic/js _site/classic/assets
           cp -a docs/. _site/
           cp -a web/dist/. _site/app/
+          cp index.html sheet.html _site/classic/
+          cp -a js/. _site/classic/js/
+          if [ -d assets ]; then cp -a assets/. _site/classic/assets/; fi
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

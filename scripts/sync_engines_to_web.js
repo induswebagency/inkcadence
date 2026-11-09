@@ -20,7 +20,16 @@ function convert(name, exportName) {
   console.log('synced', out);
 }
 
-['imaging', 'glyphs', 'render'].forEach((n) => {
-  const exportName = n === 'imaging' ? 'Imaging' : n === 'glyphs' ? 'Glyphs' : 'Rendering';
-  convert(n, exportName);
+const modules = [
+  ['imaging', 'Imaging'],
+  ['glyphs', 'Glyphs'],
+  ['render', 'Rendering'],
+  ['presets', 'Presets'],
+  ['harvest', 'Harvest'],
+  ['assignment', 'Assignment'],
+  ['packshare', 'PackShare']
+];
+
+modules.forEach(function (pair) {
+  convert(pair[0], pair[1]);
 });
