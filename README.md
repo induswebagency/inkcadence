@@ -26,11 +26,11 @@
   <a href="ML.md">ML</a>
 </p>
 
-> **Inkcadence learns your handwriting from your own pages and writes new ones in it** — classical glyph synthesis by default, optional neural personalization when the ML service is available. One repo, two deploy modes (`selfhost` | `saas`). Light and dark themes.
+> **Inkcadence learns your handwriting from full written assignments** — no alphabet sheet required. Ten built-in hands, letter-crop harvest, lined or blank A4, PNG/PDF export. Classical by default; optional neural when ML is hosted. Light and dark themes.
 
 ## See it work
 
-The frames below are the Vite app, trained on this repo’s sample fixtures: 3 pages, a filled glyph sheet, quality **89/100**, **80/80** letterforms, then a rendered page. The paper stays paper-coloured in both themes.
+The walkthrough below is the **classic writer**: upload assignment pages, analyze the pack, then render a lined A4 page (zoomed so the hand stays readable).
 
 <p align="center">
   <img src="docs/media/working.gif" alt="Inkcadence walkthrough: upload assignment pages, learn the hand, then render a clear lined A4 page" width="880">
@@ -47,19 +47,19 @@ The frames below are the Vite app, trained on this repo’s sample fixtures: 3 p
 
 ### Product workflow
 
-<img src="docs/media/workflow-product.svg" alt="Workflow: samples, sheet, quality, style pack, write, export" width="880">
+<img src="docs/media/workflow-product.svg" alt="Workflow: assignment, match style, harvest, style pack, write, export" width="880">
 
-| Samples | Glyph sheet |
+| Assignment pages | Learned pack |
 | --- | --- |
-| <img src="docs/media/train-samples-light.jpg" alt="Three sample pages loaded" width="420"> | <img src="docs/media/train-sheet-light.jpg" alt="Glyph sheet with the grid aligned" width="420"> |
-| **Quality 89** | **Saved letterforms** |
-| <img src="docs/media/train-quality-light.jpg" alt="Quality score 89 with full glyph coverage" width="420"> | <img src="docs/media/train-glyphs-light.jpg" alt="Extracted glyph grid" width="420"> |
+| <img src="docs/media/train-samples-light.jpg" alt="Assignment pages loaded in Train" width="420"> | <img src="docs/media/train-quality-light.jpg" alt="Learned patterns after analyze" width="420"> |
+| **Write on lined A4** | **Page zoom** |
+| <img src="docs/media/write-result-light.jpg" alt="Rendered lined page in Write" width="420"> | <img src="docs/media/result-page.jpg" alt="Zoomed handwritten A4" width="420"> |
 
 ### GitHub workflows
 
 <img src="docs/media/workflow-ci.svg" alt="CI tests and builds images; Pages publishes the landing site and the app" width="880">
 
-Pushing to `main` runs [CI](.github/workflows/ci.yml) (tests, Vite build, API image, ML image) and [Pages](.github/workflows/pages.yml) (this guide, the screenshots, and the app at `/app/`).
+Pushing to `main` runs [CI](.github/workflows/ci.yml) and [Pages](.github/workflows/pages.yml) (this guide, screenshots, Vite app at `/app/`, classic writer at `/classic/`).
 
 ## Stack
 

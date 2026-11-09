@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Inkcadence — learn your handwriting, then write new pages in it</title>
-  <meta name="description" content="Inkcadence learns your handwriting from your own pages and writes new ones in it. Classical letterforms run in the browser. Photos stay on your device. Optional neural writing falls back to classical.">
+  <meta name="description" content="Train Inkcadence on full written assignments — no alphabet sheet required. Ten built-in hands, lined or blank A4, harvest letter crops, export PNG/PDF. Runs in the browser.">
   <meta name="author" content="Inkcadence">
   <meta name="theme-color" content="#f3efe6">
   <meta name="robots" content="index, follow, max-image-preview:large">
@@ -14,7 +14,7 @@
   <meta property="og:site_name" content="Inkcadence">
   <meta property="og:url" content="https://mafzalkalwardev.github.io/inkcadence/">
   <meta property="og:title" content="Inkcadence — learn your handwriting, then write new pages in it">
-  <meta property="og:description" content="Train on your own pages, score the style pack, then render new ruled pages in that hand. Light and dark. Photos stay in the browser.">
+  <meta property="og:description" content="Upload old assignments, match one of ten writing styles, then render on lined or blank A4. Photos stay in the browser.">
   <meta property="og:image" content="https://mafzalkalwardev.github.io/inkcadence/media/write-result-light.jpg">
   <meta property="og:image:alt" content="Inkcadence rendered a ruled page in a trained handwriting style, light theme">
   <meta name="twitter:card" content="summary_large_image">
@@ -53,22 +53,24 @@
         "applicationCategory": "DesignApplication",
         "applicationSubCategory": "Handwriting synthesis",
         "operatingSystem": "Web browser",
-        "url": "https://mafzalkalwardev.github.io/inkcadence/app/",
+        "url": "https://mafzalkalwardev.github.io/inkcadence/classic/",
         "downloadUrl": "https://github.com/mafzalkalwardev/inkcadence",
-        "softwareVersion": "2.0.0",
+        "softwareVersion": "2.1.0",
         "license": "https://opensource.org/licenses/MIT",
         "isAccessibleForFree": true,
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-        "description": "Inkcadence learns an individual handwriting style from that person's own pages and generates new pages with the same letterforms, slant, stroke, and ink. Classical synthesis runs locally. Neural personalization is optional and falls back to classical writing.",
+        "description": "Inkcadence learns handwriting from full written assignment pages — no separate alphabet sheet required. It matches one of ten built-in hands, harvests letter crops, and renders lined or blank A4 pages in the browser.",
         "featureList": [
-          "Light and dark themes",
-          "Sample-page analysis for slant, stroke, spacing, and pen colour",
-          "Glyph sheet capture",
-          "Quality score before save",
-          "Multi-page ruled, grid, or plain rendering",
-          "PNG download and print to PDF",
-          "Optional neural writer with classical fallback",
-          "Self-host and SaaS deploy modes"
+          "Train from full assignment pages (no alphabet sheet required)",
+          "Ten built-in writing styles (best and normal hands)",
+          "Ink, slant, stroke, spacing, and heading-pattern analysis",
+          "Letter-crop harvest from assignment photos",
+          "Lined A4, blank A4, and grid paper",
+          "Layout presets, page continuity, and style score preview",
+          "PNG, PDF, and print export",
+          "Shareable style packs without raw photos",
+          "Optional alphabet sheet and optional neural writer",
+          "Light and dark themes; classic writer and Vite app"
         ],
         "screenshot": [
           "https://mafzalkalwardev.github.io/inkcadence/media/write-result-light.jpg",
@@ -79,15 +81,14 @@
       {
         "@type": "HowTo",
         "name": "Write a new page in your own handwriting with Inkcadence",
-        "description": "Train a style pack from your pages and a filled glyph sheet, check the quality score, then render new text.",
-        "totalTime": "PT15M",
+        "description": "Train from full assignment pages, match a built-in hand, then render on lined or blank A4.",
+        "totalTime": "PT10M",
         "step": [
-          { "@type": "HowToStep", "position": 1, "name": "Add sample pages", "text": "Upload one to eight photos or scans of your own writing so Inkcadence can measure pen colour, slant, stroke width, and spacing." },
-          { "@type": "HowToStep", "position": 2, "name": "Fill the glyph sheet", "text": "Print the template, write every character, and upload a flat photo. The grid is auto-aligned and can be nudged." },
-          { "@type": "HowToStep", "position": 3, "name": "Read the quality score", "text": "Inkcadence scores glyph coverage, stroke confidence, and sample count. Preview a sentence before you save." },
-          { "@type": "HowToStep", "position": 4, "name": "Save the style pack", "text": "The pack stores letterforms and ink stats in this browser, or on your own server if you self-host." },
-          { "@type": "HowToStep", "position": 5, "name": "Write", "text": "Choose classical, neural, or auto. Auto uses a neural model only when one is ready." },
-          { "@type": "HowToStep", "position": 6, "name": "Export", "text": "Download PNGs or use Print / PDF. Leave the AI watermark on when the page could be mistaken for unaided handwriting." }
+          { "@type": "HowToStep", "position": 1, "name": "Upload assignment pages", "text": "Upload one to eight photos of full written assignments with headings and body text. No alphabet sheet is required." },
+          { "@type": "HowToStep", "position": 2, "name": "Match a writing style", "text": "Auto-match one of ten built-in hands (best or normal), or lock a specific style. Inkcadence also harvests letter crops from your pages." },
+          { "@type": "HowToStep", "position": 3, "name": "Review the learned pack", "text": "Check the style score, detected inks, heading weight, and a side-by-side preview against your page." },
+          { "@type": "HowToStep", "position": 4, "name": "Write on lined or blank A4", "text": "Paste assignment text, pick a layout preset, choose lined, blank, or grid paper, then render." },
+          { "@type": "HowToStep", "position": 5, "name": "Export", "text": "Download PNGs, download a multi-page PDF, or print. Optionally export a style pack without raw photos." }
         ]
       },
       {
@@ -229,8 +230,8 @@
       Inkcadence
     </a>
     <nav aria-label="Page">
+      <a class="hide-sm" href="#whats-new">What’s new</a>
       <a class="hide-sm" href="#how-it-works">How it works</a>
-      <a class="hide-sm" href="#workflows">Workflows</a>
       <a class="hide-sm" href="#results">Results</a>
       <a href="#faq">FAQ</a>
       <button type="button" id="themeToggle" class="ghost">Dark theme</button>
@@ -242,81 +243,94 @@
     <section class="hero">
       <p class="note">Open-source handwriting synthesis · MIT · updated 9 November 2026</p>
       <h1>Your hand, on every page.</h1>
-      <p class="lede">Inkcadence learns a handwriting style from your own pages and writes new pages in it. Classical letterforms run in the browser, so the photos stay on your device. Neural writing is optional and falls back to the classical writer when it is not available.</p>
+      <p class="lede">Upload old written assignments — headings and all — and Inkcadence learns the ink, slant, and patterns. Match one of ten built-in hands, then write new work on lined or blank A4. Everything runs in the browser; photos stay on your device.</p>
       <div class="cta">
-        <a class="btn" href="app/#/">Start writing</a>
+        <a class="btn" href="classic/">Start classic writer</a>
         <a class="btn ghost" href="https://github.com/mafzalkalwardev/inkcadence">Source on GitHub</a>
       </div>
       <div class="facts">
-        <article><strong>On device</strong><span>Samples are analysed locally. A server, if you run one, stores the style pack, not the photos.</span></article>
-        <article><strong>Classical first</strong><span>Auto mode uses a neural model only when that pack has one ready.</span></article>
-        <article><strong>Light and dark</strong><span>The same train and write flow in both themes. The paper on the page stays paper.</span></article>
+        <article><strong>Assignment-first</strong><span>No alphabet sheet required. Full pages teach ink, slant, spacing, and heading weight.</span></article>
+        <article><strong>Ten ready hands</strong><span>Best and normal styles with different heading treatments — auto-matched from your pages.</span></article>
+        <article><strong>Lined or blank A4</strong><span>Layout presets, PDF export, and shareable packs without raw photos.</span></article>
+      </div>
+    </section>
+
+    <section id="whats-new">
+      <h2>What’s new</h2>
+      <p>The classic writer at <a href="classic/">/classic/</a> is the fastest path on GitHub Pages. The Vite app at <a href="app/#/">/app/</a> still includes the sheet wizard and neural hooks when you self-host.</p>
+      <div class="steps">
+        <article class="card"><em>Train</em><h3>Full assignments</h3><p>Upload exam, essay, lab, or notes pages. Tag thumbs as heading or body. Harvest letter crops automatically.</p></article>
+        <article class="card"><em>Styles</em><h3>10 built-ins</h3><p>Neat exam, everyday notes, formal black, lab green, fountain navy, and more — best and normal quality.</p></article>
+        <article class="card"><em>Paper</em><h3>Lined · blank · grid</h3><p>Exam lined, blank essay, and lab grid presets, with same-hand continuity across pages.</p></article>
+        <article class="card"><em>Export</em><h3>PNG · PDF · share</h3><p>Download pages, print A4, or export a style pack that strips assignment photos.</p></article>
+        <article class="card"><em>Quality</em><h3>Score + compare</h3><p>Style score, matched base hand, and a side-by-side strip of your page vs the generated line.</p></article>
+        <article class="card"><em>Advanced</em><h3>Sheet + neural</h3><p>Optional alphabet sheet for exact glyphs. Optional CharStrokeVAE when an API+ML host is online.</p></article>
       </div>
     </section>
 
     <section id="how-it-works">
       <h2>How Inkcadence works</h2>
-      <p>Two inputs make a style pack. Old pages teach the look. A filled character sheet teaches the letters. The writer then lays your text out on paper.</p>
+      <p>Assignment pages teach the look. Built-in styles (or an optional sheet) supply letterforms. The writer lays your text out on A4 paper.</p>
       <div class="steps">
-        <article class="card"><em>Step 1</em><h3>Samples</h3><p>Upload one to eight pages. Inkcadence measures slant, stroke width, line spacing, and pen colour.</p></article>
-        <article class="card"><em>Step 2</em><h3>Glyph sheet</h3><p>Print the template, write every character, and upload a flat photo. The grid auto-aligns.</p></article>
-        <article class="card"><em>Step 3</em><h3>Quality</h3><p>A score from 0 to 100 reports coverage and stroke confidence. Preview a sentence before you save.</p></article>
-        <article class="card"><em>Step 4</em><h3>Style pack</h3><p>Save the letterforms and ink stats. Keep more than one hand in the sidebar.</p></article>
-        <article class="card"><em>Step 5</em><h3>Write</h3><p>Type the page. Choose auto, classical, or neural. Headings start with #.</p></article>
-        <article class="card"><em>Step 6</em><h3>Export</h3><p>Download PNGs or open Print / PDF. Leave the AI watermark on when the page could be mistaken for unaided handwriting.</p></article>
+        <article class="card"><em>Step 1</em><h3>Assignment pages</h3><p>Upload one to eight full written pages. Inkcadence measures slant, stroke, spacing, pen colour, and heading patterns.</p></article>
+        <article class="card"><em>Step 2</em><h3>Match a hand</h3><p>Auto-match one of ten built-in writing styles, or lock exam-neat / notes-normal yourself.</p></article>
+        <article class="card"><em>Step 3</em><h3>Harvest + score</h3><p>Letter crops are pulled from your pages. A style score and preview show what was learned.</p></article>
+        <article class="card"><em>Step 4</em><h3>Style pack</h3><p>Save the pack with your inks and matched hand. Built-ins stay in the sidebar for instant writing.</p></article>
+        <article class="card"><em>Step 5</em><h3>Write</h3><p>Paste assignment text (# for headings). Pick lined, blank, or grid A4 and a layout preset.</p></article>
+        <article class="card"><em>Step 6</em><h3>Export</h3><p>Download PNGs, download PDF, or print. Leave the AI watermark on when disclosure matters.</p></article>
       </div>
     </section>
 
     <section id="walkthrough">
       <h2>Full walkthrough</h2>
-      <p>This recording is the real app: sign up locally, train on the repository’s sample pages and glyph sheet, score the pack, save it, and render a page. The last frame switches to the dark theme with the same result.</p>
+      <p>This recording is the classic writer: local account, upload assignment pages, analyze and save a pack, then render a lined A4 page. The climax zooms the handwritten result so the hand stays readable.</p>
       <div class="gif">
         <img src="media/working.gif" alt="Inkcadence walkthrough: upload assignment pages, analyze the hand, then write a clear lined A4 page" width="1000" height="700">
       </div>
     </section>
 
     <section id="results">
-      <h2>Light and dark, with the result</h2>
-      <p>The same account trained a pack named “Blue pen notes”: 3 sample pages, 80 of 80 letterforms, quality score 89. The rendered page is the Write tab output, not a mockup.</p>
+      <h2>From assignment pages to a written A4</h2>
+      <p>Classic writer demo: train on assignment photos, match a built-in hand, render Biology Q&amp;A on lined paper. The page crop is the Write output, not a mockup.</p>
       <div class="pair">
         <figure>
-          <img src="media/write-result-light.jpg" alt="Light theme: Inkcadence Write view showing one rendered ruled page in the trained hand" width="1280" height="900">
-          <figcaption>Light theme. One page rendered, ready to download as PNG.</figcaption>
+          <img src="media/write-result-light.jpg" alt="Classic writer Write view showing one rendered lined A4 page" width="1280" height="900">
+          <figcaption>Write view after render — lined A4 in the matched hand.</figcaption>
         </figure>
         <figure>
-          <img src="media/write-result-dark.jpg" alt="Dark theme: the same rendered handwritten page inside the Inkcadence Write view" width="1280" height="900">
-          <figcaption>Dark theme. The workspace goes dark. The paper stays paper.</figcaption>
+          <img src="media/train-samples-light.jpg" alt="Train tab with uploaded assignment page thumbnails" width="1280" height="900">
+          <figcaption>Train tab: assignment pages loaded, ready to analyze.</figcaption>
         </figure>
       </div>
       <figure class="wide">
-        <img src="media/result-page.jpg" alt="Rendered ruled page reading Week 3 notes, then three handwritten sentences about cells and homework" width="1240" height="1754">
-        <figcaption>The page itself: heading, three lines, ruled paper, and the AI-assisted watermark along the bottom.</figcaption>
+        <img src="media/result-page.jpg" alt="Zoomed lined A4 page: Assignment 4 Biology with handwritten questions and answers" width="1240" height="780">
+        <figcaption>Zoomed page: heading, name line, numbered questions, and answers on lined A4.</figcaption>
       </figure>
     </section>
 
     <section id="workflows">
       <h2>Workflows</h2>
-      <p>The product path is samples, sheet, score, pack, write, export. The repository path is test, then publish this site.</p>
+      <p>The product path is assignment → match style → harvest/score → pack → write → export. CI still tests and publishes this site.</p>
       <figure class="wide">
         <img src="media/workflow-product.svg" alt="Diagram of the Inkcadence product workflow: samples, sheet, quality, style pack, write, and page export" width="1200" height="220">
         <figcaption>Product workflow, from a photo of your writing to an exported page.</figcaption>
       </figure>
       <div class="gallery" style="margin-top:14px">
         <figure>
-          <img src="media/train-samples-light.jpg" alt="Train step with three sample handwriting pages loaded and the pack name Blue pen notes" width="1280" height="900">
-          <figcaption>Samples loaded. These teach ink, slant, and spacing.</figcaption>
+          <img src="media/train-samples-light.jpg" alt="Train step with assignment pages uploaded" width="1280" height="900">
+          <figcaption>Assignment pages loaded. These teach ink, slant, and spacing.</figcaption>
         </figure>
         <figure>
-          <img src="media/train-sheet-light.jpg" alt="Filled glyph sheet with the detection grid aligned over letters, digits, and punctuation" width="1280" height="900">
-          <figcaption>Glyph sheet with the grid auto-aligned.</figcaption>
+          <img src="media/train-quality-light.jpg" alt="Learned patterns card after analyzing assignment pages" width="1280" height="900">
+          <figcaption>Learned patterns: style score, matched hand, side-by-side preview.</figcaption>
         </figure>
         <figure>
-          <img src="media/train-quality-light.jpg" alt="Quality step showing a score of 89 out of 100, 100 percent glyph coverage, and 80 of 80 letterforms" width="1280" height="900">
-          <figcaption>Quality step: 89/100, full coverage, ready to save.</figcaption>
+          <img src="media/train-sheet-light.jpg" alt="Optional glyph sheet with the detection grid aligned" width="1280" height="900">
+          <figcaption>Optional alphabet sheet — only if you want exact letterforms.</figcaption>
         </figure>
         <figure>
-          <img src="media/train-glyphs-light.jpg" alt="Extracted style panel showing slant, stroke width, 80 letterforms, and a grid of captured glyphs" width="1280" height="900">
-          <figcaption>Saved pack: the captured letterforms.</figcaption>
+          <img src="media/train-glyphs-light.jpg" alt="Extracted or harvested letterforms grid" width="1280" height="900">
+          <figcaption>Harvested / extracted letterforms when available.</figcaption>
         </figure>
       </div>
       <figure class="wide">
@@ -344,16 +358,16 @@
     </section>
 
     <section id="compare">
-      <h2>Classical, neural, self-host, demo</h2>
+      <h2>Classic writer, Vite app, neural, self-host</h2>
       <table>
         <thead>
           <tr><th>Mode</th><th>What it does</th><th>What it needs</th></tr>
         </thead>
         <tbody>
-          <tr><td>Classical</td><td>Stamps your captured glyphs with measured slant, stroke, spacing, ink, and jitter.</td><td>A browser. No server.</td></tr>
-          <tr><td>Neural</td><td>Personalizes one pack with a small embedding. Falls back to classical if the service is down.</td><td>The optional <code>ml/</code> service.</td></tr>
-          <tr><td>Self-host</td><td>Same app, plus accounts and pack sync on your Postgres database.</td><td>Docker Compose, or Node for development.</td></tr>
-          <tr><td>This site</td><td>The guide you are reading, plus the classical app at <a href="app/#/">/app/</a>.</td><td>Nothing but the browser.</td></tr>
+          <tr><td>Classic writer</td><td>Assignment-first train, 10 built-ins, harvest, lined/blank A4, PDF and pack share.</td><td>A browser. Live at <a href="classic/">/classic/</a>.</td></tr>
+          <tr><td>Vite app</td><td>Sheet wizard, marketing routes, neural train/infer UI when an API is connected.</td><td>Browser demo at <a href="app/#/">/app/</a>; API for neural.</td></tr>
+          <tr><td>Neural</td><td>CharStrokeVAE glyph atlas for a pack. Falls back to classical if the service is down.</td><td>Optional <code>ml/</code> service behind your API.</td></tr>
+          <tr><td>Self-host</td><td>Accounts, pack sync, and optional ML on your Postgres stack.</td><td>Docker Compose, or Node for development.</td></tr>
         </tbody>
       </table>
     </section>
@@ -364,16 +378,18 @@
 
       <article class="qa" id="what-is-inkcadence"><h3>What is Inkcadence?</h3><p>Inkcadence is an open-source app that learns a handwriting style from a person’s own pages and writes new pages in that style. Classical glyph synthesis is the default and runs in the browser. A small optional neural model can personalize a style pack and falls back to classical writing when it is unavailable.</p></article>
       <article class="qa" id="who-for"><h3>Who is Inkcadence for?</h3><p>Inkcadence is for people who want notes, letters, or practice pages in their own hand, and for operators who want to self-host that workflow. It is not a tool for forging signatures, identity documents, certificates, or graded exams.</p></article>
-      <article class="qa" id="how-learn"><h3>How does Inkcadence learn handwriting?</h3><p>Sample pages teach the look: pen colours, slant, stroke width, and line spacing. A filled glyph sheet teaches the letterforms. Those measurements become a style pack, which the writer uses to stamp characters onto ruled, grid, or plain paper.</p></article>
-      <article class="qa" id="style-pack"><h3>What is a style pack?</h3><p>A style pack is the saved profile for one handwriting style. It holds the captured glyphs, any missing characters, pen colours, paper colour, and stats such as slant, stroke width, and line gap. You can keep more than one pack.</p></article>
-      <article class="qa" id="samples"><h3>What should I upload as sample pages?</h3><p>Upload one to eight photos or scans of your own writing. Flat lighting and a page that is mostly your ink, not highlighter, give a cleaner pen colour and stroke estimate. The app accepts common browser image types.</p></article>
-      <article class="qa" id="glyph-sheet"><h3>What is the glyph sheet?</h3><p>The glyph sheet is a printable grid. You write one character per cell, photograph it flat, and upload it. Inkcadence auto-aligns the grid and lets you nudge the left, top, width, and height percentages if the lines are off.</p></article>
+      <article class="qa" id="how-learn"><h3>How does Inkcadence learn handwriting?</h3><p>Full assignment pages teach the look: pen colours, slant, stroke width, line spacing, neatness, and heading weight. Inkcadence auto-matches one of ten built-in hands and harvests letter-like crops from your pages. An optional alphabet sheet can add exact glyphs if you want them.</p></article>
+      <article class="qa" id="style-pack"><h3>What is a style pack?</h3><p>A style pack is the saved profile for one handwriting style. It holds detected inks, stats, the matched built-in hand, harvested crops or sheet glyphs, and write defaults such as heading style and jitter. Built-in packs ship with the app; trained packs are yours.</p></article>
+      <article class="qa" id="samples"><h3>What should I upload as sample pages?</h3><p>Upload one to eight photos or scans of full written assignments — headings, numbered answers, body text. Flat lighting helps. Phone photos work; the harvest path is tuned for slightly dim or skewed pages.</p></article>
+      <article class="qa" id="no-sheet"><h3>Do I need an alphabet sheet?</h3><p>No. The classic writer is assignment-first. The alphabet sheet is optional under an advanced disclosure if you want captured letterforms for every character.</p></article>
+      <article class="qa" id="builtins"><h3>What are the ten built-in writing styles?</h3><p>They are ready hands that mix best (exam-neat) and normal (everyday) quality, with different heading treatments and ink colours. Auto-match picks the closest one from your page stats, or you can lock a style before you analyze.</p></article>
+      <article class="qa" id="glyph-sheet"><h3>What is the glyph sheet?</h3><p>An optional printable grid. Write one character per cell, photograph it flat, and upload it. Inkcadence auto-aligns the grid. Most users can skip this and rely on built-ins plus harvested crops.</p></article>
       <article class="qa" id="character-count"><h3>How many characters does the sheet capture?</h3><p>The sheet covers lowercase and uppercase letters, digits, and the punctuation set used by the classical writer. A full sample run in this repository captured 80 of 80 letterforms.</p></article>
       <article class="qa" id="quality-score"><h3>What does the quality score mean?</h3><p>The score is 0 to 100. It mixes glyph coverage, stroke confidence, whether pen colours were found, and how many sample pages you added. The sample walkthrough on this site scored 89 with 100 percent coverage. A low score means the classical writer has fewer real letterforms to stamp.</p></article>
       <article class="qa" id="preview"><h3>Can I preview a sentence before saving?</h3><p>Yes. On the quality step, type a phrase and press Preview. Inkcadence renders that phrase with the draft pack so you can judge the hand before you save it.</p></article>
-      <article class="qa" id="write-page"><h3>How do I write a new page?</h3><p>Open the Write tab, pick a style pack, type the text, and press Render pages. Start a line with # to make a heading. Then download PNGs or use Print / PDF.</p></article>
+      <article class="qa" id="write-page"><h3>How do I write a new page?</h3><p>Open Write, pick a style pack or built-in, paste text (or press Format assignment), choose a layout preset and lined/blank/grid paper, then Render. Download PNGs, Download PDF, or Print.</p></article>
       <article class="qa" id="controls"><h3>What do writing size, variation, and seed change?</h3><p>Writing size scales the letterforms. Natural variation adds jitter so repeated letters are not identical. Page seed picks a repeatable random stream, so the same seed recreates the same jitter.</p></article>
-      <article class="qa" id="pdf"><h3>How do I print or save a PDF?</h3><p>Render the pages, then press Print / PDF. The browser print dialog can save a PDF. Each page is laid out as A4. You can also download PNG files.</p></article>
+      <article class="qa" id="pdf"><h3>How do I print or save a PDF?</h3><p>Render the pages, then press Download PDF for a multi-page A4 file, or Print for the browser dialog. You can also download PNG files and export or import a style pack without raw photos.</p></article>
       <article class="qa" id="photos"><h3>Are my photos uploaded?</h3><p>Not on the default path. Sample photos and the glyph sheet are analysed in the browser. If you connect your own API, only the extracted style-pack JSON is synced. Source photos are not stored server-side.</p></article>
       <article class="qa" id="storage"><h3>Where do accounts and style packs live?</h3><p>On the GitHub Pages demo and whenever no API is configured, accounts and packs stay in this browser, in IndexedDB with a localStorage fallback. A self-hosted or SaaS API can sync the pack JSON for that account.</p></article>
       <article class="qa" id="classical-neural"><h3>What is the difference between classical and neural writing?</h3><p>Classical writing stamps the letterforms captured from your sheet and applies your measured slant, stroke, spacing, and ink. Neural writing, when a per-pack model is ready, personalizes further through the optional ML service. It does not train a giant foundation model.</p></article>
@@ -381,7 +397,7 @@
       <article class="qa" id="self-host"><h3>Can I self-host Inkcadence?</h3><p>Yes. Docker Compose starts Postgres, Redis, and the API. An optional Compose profile starts the neural service. The same repository also runs with an in-memory API for development, or as a static page with no server.</p></article>
       <article class="qa" id="saas"><h3>Is there a hosted plan?</h3><p>The software supports a SaaS mode with Stripe billing, email verification, quotas, and a watermark policy. The public GitHub Pages site is the free classical app, not a paid hosted account.</p></article>
       <article class="qa" id="price"><h3>How much does Inkcadence cost?</h3><p>The project is MIT licensed and the browser app is free. Self-hosting costs whatever you pay to run your own machine or database. Hosted Pro and Team plans are optional and configured by whoever operates the SaaS deployment.</p></article>
-      <article class="qa" id="demo-server"><h3>Does the GitHub Pages demo need a server?</h3><p>No. The demo at <a href="app/#/">/app/</a> runs the classical writer entirely in your browser. Create a local account, train a pack, and render pages without an API. Neural training needs the separate ML service, so the demo stays classical.</p></article>
+      <article class="qa" id="demo-server"><h3>Does the GitHub Pages demo need a server?</h3><p>No. Use <a href="classic/">/classic/</a> for the assignment-first writer, or <a href="app/#/">/app/</a> for the Vite app. Both run classical writing in the browser. Neural training needs a separate API and ML service.</p></article>
       <article class="qa" id="offline"><h3>Can I use Inkcadence offline?</h3><p>After the page has loaded, classical training and writing do not need a network. The first visit downloads the app. A self-hosted API is only required when you want synced accounts or neural jobs.</p></article>
       <article class="qa" id="watermark"><h3>What is the AI watermark?</h3><p>The watermark is a small disclosure on the rendered page that the handwriting was assisted. Leave it on when a reader might think the page was written by hand without software. SaaS deployments can force it.</p></article>
       <article class="qa" id="misuse"><h3>Can I use pages for signatures, exams, or official documents?</h3><p>No. Do not use Inkcadence to forge signatures, identity documents, certificates, or work that is supposed to be written under exam conditions. The project documents this limit in the app’s privacy and terms.</p></article>
@@ -390,10 +406,11 @@
       <article class="qa" id="many-packs"><h3>Can I keep more than one handwriting style?</h3><p>Yes. Each style is a separate pack in the sidebar. Select the pack you want before you render. You can delete a pack from its row.</p></article>
       <article class="qa" id="delete"><h3>How do I delete a style pack?</h3><p>In the app sidebar, use the delete control on that pack’s row and confirm. Deleting removes the pack from this browser, or from your server when the account is synced.</p></article>
       <article class="qa" id="ink"><h3>Does Inkcadence detect pen colour?</h3><p>Yes. Sample pages are clustered into pen and faint colours. The Write tab shows those inks as swatches, and you pick the one to render with. Highlighter-like bright strokes are treated as less reliable ink.</p></article>
-      <article class="qa" id="paper"><h3>What paper styles can I render?</h3><p>Ruled, grid, and plain. You can also set the heading treatment to underline, double underline, or none. The page colour comes from the paper measured in your samples.</p></article>
+      <article class="qa" id="paper"><h3>What paper styles can I render?</h3><p>Lined A4 (assignment lines), blank A4, and grid A4. Layout presets set paper, margins, headings, and page numbers. Heading treatment can be underline, double underline, or none.</p></article>
+      <article class="qa" id="share"><h3>Can I share a style pack?</h3><p>Yes. Export a pack file from Write. Photos are stripped so you share the hand profile, not the raw assignment scans. Import works offline in the same browser app.</p></article>
       <article class="qa" id="license"><h3>Is Inkcadence open source?</h3><p>Yes. The license is MIT. The repository is <a href="https://github.com/mafzalkalwardev/inkcadence">mafzalkalwardev/inkcadence</a> and includes the browser app, the API, and the optional ML service.</p></article>
       <article class="qa" id="ci"><h3>What does continuous integration check?</h3><p>On every push to main, GitHub Actions installs dependencies, checks syntax, runs the API and engine tests, builds the Vite app, and builds the API and ML Docker images. The Pages workflow tests again, then publishes this site and the app.</p></article>
-      <article class="qa" id="pages-publish"><h3>How is the live site published?</h3><p>The Pages workflow assembles this landing page, the screenshots, and the built browser app, then deploys them with GitHub Pages. The site root is the guide. The app lives at <a href="app/#/">/app/</a>.</p></article>
+      <article class="qa" id="pages-publish"><h3>How is the live site published?</h3><p>The Pages workflow assembles this landing page, the screenshots, the Vite app at <a href="app/#/">/app/</a>, and the classic writer at <a href="classic/">/classic/</a>, then deploys them with GitHub Pages.</p></article>
       <article class="qa" id="foundation"><h3>Does the neural service train a large foundation model?</h3><p>No. The ML service personalizes a lightweight style embedding for one pack. Without PyTorch it can still mark a small embedding checkpoint ready. If that service is absent, classical writing continues.</p></article>
       <article class="qa" id="server-photos"><h3>Are source photos stored on the server?</h3><p>No. The documented server path stores style-pack JSON, not the photographs. Consented neural fine-tunes in a SaaS deploy may use object storage, and that path is separate from the default browser flow.</p></article>
       <article class="qa" id="passwords"><h3>How are passwords stored?</h3><p>API passwords are hashed with scrypt, and session tokens are hashed at rest. The local demo keeps the account in this browser. Use a unique password even for a local account.</p></article>

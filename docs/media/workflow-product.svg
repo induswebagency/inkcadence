@@ -4,41 +4,41 @@
   <text x="36" y="36" font-family="Georgia, serif" font-size="20" fill="#16233a">Product workflow</text>
   <g font-family="Segoe UI, Arial, sans-serif" text-anchor="middle">
     <g>
-      <rect x="28" y="58" width="150" height="92" rx="16" fill="#fffdf8" stroke="#d5dde8"/>
-      <text x="103" y="98" font-size="15" font-weight="700" fill="#16233a">1. Samples</text>
-      <text x="103" y="122" font-size="12" fill="#6a7585">pen, slant, stroke</text>
+      <rect x="28" y="58" width="170" height="92" rx="16" fill="#fffdf8" stroke="#d5dde8"/>
+      <text x="113" y="94" font-size="15" font-weight="700" fill="#16233a">1. Assignment</text>
+      <text x="113" y="118" font-size="12" fill="#6a7585">full pages + ink</text>
     </g>
     <g>
-      <rect x="214" y="58" width="150" height="92" rx="16" fill="#fffdf8" stroke="#d5dde8"/>
-      <text x="289" y="98" font-size="15" font-weight="700" fill="#16233a">2. Sheet</text>
-      <text x="289" y="122" font-size="12" fill="#6a7585">letterforms</text>
+      <rect x="230" y="58" width="170" height="92" rx="16" fill="#fffdf8" stroke="#d5dde8"/>
+      <text x="315" y="94" font-size="15" font-weight="700" fill="#16233a">2. Match style</text>
+      <text x="315" y="118" font-size="12" fill="#6a7585">10 built-ins</text>
     </g>
     <g>
-      <rect x="400" y="58" width="150" height="92" rx="16" fill="#fffdf8" stroke="#d5dde8"/>
-      <text x="475" y="98" font-size="15" font-weight="700" fill="#16233a">3. Quality</text>
-      <text x="475" y="122" font-size="12" fill="#6a7585">score before save</text>
+      <rect x="432" y="58" width="170" height="92" rx="16" fill="#fffdf8" stroke="#d5dde8"/>
+      <text x="517" y="94" font-size="15" font-weight="700" fill="#16233a">3. Harvest</text>
+      <text x="517" y="118" font-size="12" fill="#6a7585">crops + score</text>
     </g>
     <g>
-      <rect x="586" y="58" width="150" height="92" rx="16" fill="#e8f0fe" stroke="#2f6fed"/>
-      <text x="661" y="98" font-size="15" font-weight="700" fill="#16233a">4. Style pack</text>
-      <text x="661" y="122" font-size="12" fill="#3a4a63">glyphs + ink</text>
+      <rect x="634" y="58" width="170" height="92" rx="16" fill="#e8f0fe" stroke="#2f6fed"/>
+      <text x="719" y="94" font-size="15" font-weight="700" fill="#16233a">4. Style pack</text>
+      <text x="719" y="118" font-size="12" fill="#3a4a63">your hand</text>
     </g>
     <g>
-      <rect x="772" y="58" width="150" height="92" rx="16" fill="#fffdf8" stroke="#d5dde8"/>
-      <text x="847" y="98" font-size="15" font-weight="700" fill="#16233a">5. Write</text>
-      <text x="847" y="122" font-size="12" fill="#6a7585">classical or neural</text>
+      <rect x="836" y="58" width="150" height="92" rx="16" fill="#fffdf8" stroke="#d5dde8"/>
+      <text x="911" y="94" font-size="15" font-weight="700" fill="#16233a">5. Write</text>
+      <text x="911" y="118" font-size="12" fill="#6a7585">lined / blank</text>
     </g>
     <g>
-      <rect x="958" y="58" width="214" height="92" rx="16" fill="#177d4f"/>
-      <text x="1065" y="98" font-size="15" font-weight="700" fill="#fff">6. Page</text>
-      <text x="1065" y="122" font-size="12" fill="#e7f6ee">PNG, print, PDF</text>
+      <rect x="1018" y="58" width="154" height="92" rx="16" fill="#177d4f"/>
+      <text x="1095" y="94" font-size="15" font-weight="700" fill="#fff">6. Export</text>
+      <text x="1095" y="118" font-size="12" fill="#e7f6ee">PNG · PDF</text>
     </g>
     <g fill="none" stroke="#2f6fed" stroke-width="2.4" stroke-linecap="round">
-      <path d="M178 104 H214"/>
-      <path d="M364 104 H400"/>
-      <path d="M550 104 H586"/>
-      <path d="M736 104 H772"/>
-      <path d="M922 104 H958"/>
+      <path d="M198 104 H230"/>
+      <path d="M400 104 H432"/>
+      <path d="M602 104 H634"/>
+      <path d="M804 104 H836"/>
+      <path d="M986 104 H1018"/>
     </g>
   </g>
 </svg>

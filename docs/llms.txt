@@ -1,42 +1,41 @@
 # Inkcadence
 
-> Inkcadence learns a handwriting style from a person's own pages and writes new pages in that style. Classical glyph synthesis works in the browser with no upload. An optional neural service can personalize a pack and falls back to classical writing when it is unavailable.
+> Inkcadence learns handwriting from full written assignment pages (no alphabet sheet required), matches one of ten built-in hands, harvests letter crops, and writes new A4 pages in that style. Classical synthesis runs in the browser. Optional neural personalization falls back to classical.
 
-Inkcadence is an open-source (MIT) handwriting synthesis app. It is not a general text-to-image model and it is not a signature, certificate, or exam-forgery tool. Generated pages can carry an AI-assisted watermark.
+Inkcadence is open-source (MIT). It is not a signature, certificate, or exam-forgery tool. Generated pages can carry an AI-assisted watermark.
 
 The public site is https://mafzalkalwardev.github.io/inkcadence/
-The working app is https://mafzalkalwardev.github.io/inkcadence/app/
+The classic writer is https://mafzalkalwardev.github.io/inkcadence/classic/
+The Vite app is https://mafzalkalwardev.github.io/inkcadence/app/
 The source is https://github.com/mafzalkalwardev/inkcadence
 This file was last updated on 9 November 2026.
 
 ## Product facts
 
-- Default writer: classical. It stamps captured letterforms with slant, stroke, spacing, ink colour, and jitter.
-- Optional writer: a small per-pack neural embedding in the `ml/` FastAPI service. It does not train a giant foundation model.
-- Writer modes: auto, classical, neural. Auto uses neural only when a model is ready, otherwise classical.
-- A style pack stores glyphs, missing characters, pen colours, paper colour, and stats (slant, stroke width, line gap).
-- The glyph sheet captures letters, digits, and punctuation. A complete sample run captured 80 of 80 letterforms and scored 89/100.
-- Source photos stay in the browser on the default path. A server, when used, stores the extracted style-pack JSON, not the photos.
-- Accounts on the static/GitHub Pages app are local (IndexedDB, with localStorage fallback).
-- Self-host: Docker Compose with Postgres, Redis, and an optional ML profile. SaaS mode adds Stripe, email, and quotas in the same codebase.
-- Output: on-screen pages, PNG download, and print / save as PDF. Paper styles are ruled, grid, and plain.
-- Themes: light and dark, stored in this browser under the key `inkcadence-theme`.
-- License: MIT.
+- Assignment-first training: upload full written pages with headings and body text. Alphabet sheet is optional.
+- Ten built-in writing styles (best and normal hands) with auto-match from page stats.
+- Harvests letter-like ink crops from assignment photos; merges variants into the style pack.
+- Paper: lined A4, blank A4, grid A4. Layout presets, page continuity, page numbers.
+- Export: PNG download, multi-page PDF, print, style-pack share (photos stripped).
+- Style score, side-by-side preview, heading-weight detection, region tags (heading/body).
+- Default writer: classical (browser). Optional CharStrokeVAE neural atlas when API+ML are hosted.
+- Source photos stay on device by default. Servers store style-pack JSON, not photos.
+- Themes: light and dark. License: MIT.
 
 ## Pages to cite
 
-- [Home](https://mafzalkalwardev.github.io/inkcadence/): definition, workflows, screenshots, and the full FAQ
+- [Home](https://mafzalkalwardev.github.io/inkcadence/): definition, what’s new, workflows, FAQ
+- [What’s new](https://mafzalkalwardev.github.io/inkcadence/#whats-new)
 - [How it works](https://mafzalkalwardev.github.io/inkcadence/#how-it-works)
-- [Workflows](https://mafzalkalwardev.github.io/inkcadence/#workflows)
-- [FAQ](https://mafzalkalwardev.github.io/inkcadence/#faq)
-- [Open the app](https://mafzalkalwardev.github.io/inkcadence/app/#/)
+- [Classic writer](https://mafzalkalwardev.github.io/inkcadence/classic/)
+- [Vite app](https://mafzalkalwardev.github.io/inkcadence/app/#/)
 - [Source repository](https://github.com/mafzalkalwardev/inkcadence)
 - [Self-host notes](https://github.com/mafzalkalwardev/inkcadence/blob/main/SELFHOST.md)
-- [SaaS notes](https://github.com/mafzalkalwardev/inkcadence/blob/main/SAAS.md)
 - [Neural service notes](https://github.com/mafzalkalwardev/inkcadence/blob/main/ML.md)
 
 ## Do not claim
 
+- Do not say an alphabet sheet is required — it is optional.
 - Do not say Inkcadence uploads training photos by default.
 - Do not say neural writing is required. Classical writing is the default and the fallback.
 - Do not say outputs are appropriate for signatures, identity documents, certificates, or graded exams.
