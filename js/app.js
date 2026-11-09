@@ -32,10 +32,19 @@
     $('appView').hidden = false;
   }
 
+  function syncAccountMode() {
+    var el = $('accountMode');
+    if (!el || !global.Store) return;
+    var remote = Store.mode() === 'remote';
+    el.textContent = remote ? 'synced' : 'on device';
+    el.className = 'mode-pill ' + (remote ? 'synced' : 'on-device');
+  }
+
   function afterLogin(user) {
     S.user = user;
     $('whoami').textContent = user;
     $('avatar').textContent = user.charAt(0).toUpperCase();
+    syncAccountMode();
     showApp();
     return refreshPacks();
   }
@@ -79,28 +88,44 @@
 
   function renderPackList() {
     var ul = $('packList');
+    var count = $('packCount');
+    if (count) count.textContent = String(S.packs.length);
     ul.innerHTML = '';
     if (!S.packs.length) {
-      var li = document.createElement('li');
-      li.className = 'muted small';
-      li.style.cursor = 'default';
-      li.textContent = 'No packs yet — build one in Train.';
-      ul.appendChild(li);
+      var empty = document.createElement('li');
+      empty.className = 'empty';
+      empty.textContent = 'No packs yet. Train your first handwriting style to see it here.';
+      ul.appendChild(empty);
       return;
     }
     S.packs.forEach(function (p) {
       var li = document.createElement('li');
       li.className = p.id === S.activeId ? 'active' : '';
+      li.title = p.name;
+
       var dot = document.createElement('span');
       dot.className = 'dot';
       dot.style.background = (p.penColours && p.penColours[0]) || '#2f6fed';
+
+      var body = document.createElement('div');
+      body.style.flex = '1';
+      body.style.minWidth = '0';
       var name = document.createElement('span');
+      name.className = 'pname';
       name.textContent = p.name;
-      name.style.flex = '1';
+      var meta = document.createElement('span');
+      meta.className = 'pmeta';
+      var glyphs = (p.glyphs && p.glyphs.length) || (p.data && p.data.glyphs && p.data.glyphs.length) || 0;
+      var pens = (p.penColours && p.penColours.length) || 0;
+      meta.textContent = glyphs ? (glyphs + ' glyphs' + (pens ? ' · ' + pens + ' ink' : '')) : 'Style pack';
+      body.appendChild(name);
+      body.appendChild(meta);
+
       var del = document.createElement('button');
-      del.className = 'tiny ghost';
+      del.className = 'pack-del';
+      del.type = 'button';
+      del.setAttribute('aria-label', 'Delete ' + p.name);
       del.textContent = '×';
-      del.style.padding = '2px 7px';
       del.onclick = function (ev) {
         ev.stopPropagation();
         if (!confirm('Delete style pack "' + p.name + '"?')) return;
@@ -118,7 +143,7 @@
         showResult(p);
       };
       li.appendChild(dot);
-      li.appendChild(name);
+      li.appendChild(body);
       li.appendChild(del);
       ul.appendChild(li);
     });
@@ -524,7 +549,10 @@
   };
 
   /* ---------------- boot ---------------- */
-  Store.currentUser().then(function (u) {
+  Promise.resolve(Store.ready).then(function () {
+    syncAccountMode();
+    return Store.currentUser();
+  }).then(function (u) {
     if (u) return afterLogin(u);
     showAuth();
   }).catch(function () { showAuth(); });

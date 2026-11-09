@@ -87,17 +87,115 @@
   .msg.ok{color:var(--ok)}
 
   /* app shell */
-  #appView{display:grid;grid-template-columns:290px 1fr;min-height:100vh}
+  #appView{display:grid;grid-template-columns:300px 1fr;min-height:100vh}
   @media (max-width:900px){#appView{grid-template-columns:1fr}}
-  aside{background:#0f1a2b;color:#c8d3e4;padding:18px;display:flex;flex-direction:column;gap:14px}
-  aside h3{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#7b8aa3;margin:14px 0 4px}
-  aside .who{display:flex;align-items:center;gap:10px}
-  .avatar{width:34px;height:34px;border-radius:50%;background:#2f6fed;display:grid;place-items:center;font-weight:700;color:#fff}
-  aside .plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
-  aside .plist li{background:#162437;border:1px solid #223449;border-radius:10px;padding:9px 10px;cursor:pointer;display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:13px}
-  aside .plist li:hover{background:#1b2c42}
-  aside .plist li.active{border-color:#2f6fed;background:#17263c}
-  aside .plist .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+  aside.sidebar{
+    position:relative;overflow:hidden;
+    background:
+      radial-gradient(420px 280px at 0% 0%, rgba(47,111,237,.28), transparent 60%),
+      radial-gradient(360px 240px at 100% 100%, rgba(23,125,79,.12), transparent 55%),
+      linear-gradient(185deg, #0c1524 0%, #132033 48%, #0f1a2b 100%);
+    color:#c8d3e4;padding:20px 16px 16px;
+    display:flex;flex-direction:column;gap:0;
+    border-right:1px solid rgba(120,150,200,.12);
+  }
+  aside.sidebar::before{
+    content:"";position:absolute;inset:0;pointer-events:none;opacity:.35;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E");
+    mix-blend-mode:soft-light;
+  }
+  .sidebar-brand{
+    position:relative;display:flex;align-items:center;gap:11px;
+    padding:2px 6px 16px;margin-bottom:4px;
+    border-bottom:1px solid rgba(140,170,210,.12);
+  }
+  .sidebar-brand .brand-name{
+    font-family:Georgia,"Iowan Old Style","Palatino Linotype",serif;
+    font-weight:700;color:#fff;font-size:1.2rem;letter-spacing:-.03em;line-height:1.1;
+  }
+  .sidebar-brand .brand-tag{display:block;font-size:11px;color:#8fa0b8;font-weight:500;letter-spacing:.02em;margin-top:2px}
+  .sidebar-who{
+    position:relative;display:flex;align-items:center;gap:12px;
+    margin:14px 4px 16px;padding:10px 12px;
+    border-radius:14px;background:rgba(255,255,255,.04);
+    border:1px solid rgba(150,180,220,.1);
+  }
+  .avatar{
+    width:40px;height:40px;border-radius:12px;flex:0 0 auto;
+    background:linear-gradient(145deg,#4f8cff,#2f6fed 55%,#1e4fbe);
+    display:grid;place-items:center;font-weight:700;color:#fff;font-size:15px;
+    box-shadow:0 6px 16px rgba(47,111,237,.35);
+  }
+  .sidebar-who .uname{font-weight:700;color:#fff;font-size:14px;line-height:1.2}
+  .sidebar-who .umeta{display:flex;align-items:center;gap:6px;margin-top:4px}
+  .mode-pill{
+    display:inline-flex;align-items:center;gap:5px;
+    font-size:10.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
+    color:#9eb0c8;padding:2px 7px;border-radius:999px;
+    background:rgba(255,255,255,.05);border:1px solid rgba(150,180,220,.12);
+  }
+  .mode-pill::before{content:"";width:6px;height:6px;border-radius:50%;background:#7b8aa3}
+  .mode-pill.on-device::before{background:#8fb6ff}
+  .mode-pill.synced::before{background:#3ecf8e}
+  .sidebar-section{position:relative;display:flex;flex-direction:column;min-height:0;flex:1}
+  .sidebar-section-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 6px 8px;
+  }
+  .sidebar-section-head h3{
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    color:#7b8aa3;margin:0;font-weight:700;
+  }
+  .pack-count{
+    font-size:11px;font-weight:700;color:#9eb0c8;
+    background:rgba(255,255,255,.06);border-radius:999px;padding:2px 8px;
+  }
+  aside .plist{
+    list-style:none;margin:0;padding:0 2px 8px;
+    display:flex;flex-direction:column;gap:7px;
+    overflow:auto;max-height:min(48vh,420px);
+    scrollbar-width:thin;scrollbar-color:#2a3c55 transparent;
+  }
+  aside .plist li.empty{
+    cursor:default;border-style:dashed;background:transparent;
+    color:#8fa0b8;font-size:12.5px;line-height:1.45;padding:14px 12px;
+    justify-content:flex-start;
+  }
+  aside .plist li{
+    position:relative;background:rgba(22,36,55,.85);
+    border:1px solid rgba(60,90,130,.28);border-radius:12px;
+    padding:10px 10px 10px 12px;cursor:pointer;
+    display:flex;justify-content:space-between;gap:8px;align-items:center;
+    font-size:13px;color:#d7e0ec;transition:background .15s ease,border-color .15s ease,transform .15s ease;
+  }
+  aside .plist li:hover{background:#1b2c42;border-color:rgba(90,130,190,.35)}
+  aside .plist li.active{
+    border-color:rgba(47,111,237,.75);background:linear-gradient(90deg,rgba(47,111,237,.18),rgba(23,38,60,.9));
+    box-shadow:inset 3px 0 0 #2f6fed;
+  }
+  aside .plist .dot{
+    width:10px;height:10px;border-radius:50%;flex:0 0 auto;
+    box-shadow:0 0 0 2px rgba(255,255,255,.08);
+  }
+  aside .plist .pname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+  aside .plist .pmeta{display:block;font-size:10.5px;color:#7b8aa3;font-weight:500;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  aside .plist .pack-del{
+    opacity:.55;background:transparent;color:#aebcd0;border:0;border-radius:8px;
+    padding:4px 8px;font-size:14px;line-height:1;cursor:pointer;
+  }
+  aside .plist li:hover .pack-del, aside .plist li.active .pack-del{opacity:1}
+  aside .plist .pack-del:hover{background:rgba(180,35,42,.2);color:#ffb4b4}
+  .sidebar-actions{position:relative;display:flex;flex-direction:column;gap:8px;padding-top:12px;margin-top:4px;border-top:1px solid rgba(140,170,210,.12)}
+  .sidebar-actions .btn-new{
+    width:100%;border-radius:11px;padding:11px 14px;font-weight:700;font-size:13px;
+    background:linear-gradient(180deg,#3d7af5,#2f6fed);box-shadow:0 8px 20px rgba(47,111,237,.28);
+  }
+  .sidebar-actions .btn-new:hover{filter:brightness(1.06)}
+  .sidebar-actions .btn-logout{
+    width:100%;border-radius:11px;padding:9px 14px;font-size:12.5px;font-weight:600;
+    background:rgba(255,255,255,.04);color:#b7c4d6;border:1px solid rgba(150,180,220,.12);
+  }
+  .sidebar-actions .btn-logout:hover{background:rgba(255,255,255,.08);color:#fff}
   main{padding:22px 26px 60px;max-width:1000px;width:100%}
   .tabs{display:flex;gap:8px;margin-bottom:18px;border-bottom:1px solid var(--line);padding-bottom:10px}
   .tabs button{background:transparent;color:var(--muted);border-radius:8px;padding:8px 14px}
@@ -163,29 +261,38 @@
 
 <!-- ============ APP ============ -->
 <div id="appView" hidden>
-  <aside>
-    <div style="display:flex;align-items:center;gap:9px">
-      <svg width="30" height="30" viewBox="0 0 128 128" role="img" aria-label="Inkcadence">
+  <aside class="sidebar" aria-label="Account and style packs">
+    <div class="sidebar-brand">
+      <svg width="34" height="34" viewBox="0 0 128 128" role="img" aria-label="Inkcadence">
         <defs><linearGradient id="lgSidebar" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0" stop-color="#dbe8ff"/><stop offset=".5" stop-color="#7aa8ff"/><stop offset="1" stop-color="#3f7bf5"/>
         </linearGradient></defs>
         <path fill="none" stroke="url(#lgSidebar)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"
               d="M14 96 C26 96 28 32 44 32 C60 32 58 104 74 104 C90 104 92 40 112 40"/>
       </svg>
-      <span style="font-weight:700;color:#fff;letter-spacing:-.2px">Inkcadence</span>
-    </div>
-    <div class="who">
-      <div class="avatar" id="avatar">?</div>
       <div>
-        <div id="whoami" style="font-weight:700;color:#fff">—</div>
-        <div class="small" style="color:#7b8aa3">local account</div>
+        <span class="brand-name">Inkcadence</span>
+        <span class="brand-tag">your hand, on every page</span>
       </div>
     </div>
-    <h3>Style packs</h3>
-    <ul class="plist" id="packList"></ul>
-    <button class="tiny ghost" id="btnNewPack" style="margin-top:2px">＋ New style pack</button>
-    <div style="flex:1"></div>
-    <button class="tiny ghost" id="btnLogout">Log out</button>
+    <div class="sidebar-who">
+      <div class="avatar" id="avatar">?</div>
+      <div style="min-width:0">
+        <div class="uname" id="whoami">—</div>
+        <div class="umeta"><span class="mode-pill on-device" id="accountMode">on device</span></div>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-head">
+        <h3>Style packs</h3>
+        <span class="pack-count" id="packCount">0</span>
+      </div>
+      <ul class="plist" id="packList"></ul>
+    </div>
+    <div class="sidebar-actions">
+      <button class="btn-new" id="btnNewPack">＋ New style pack</button>
+      <button class="btn-logout" id="btnLogout">Log out</button>
+    </div>
   </aside>
 
   <main>

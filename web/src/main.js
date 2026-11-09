@@ -238,23 +238,36 @@ async function renderApp() {
     if (!S.user) return navigate('/login');
   }
   await refreshPacks();
+  const remote = Store.mode() === 'remote';
   root.innerHTML = `
   <div class="app-shell">
-    <aside class="sidebar">
-      <div class="row" style="gap:9px">${brandSvg('lgSide')}<span style="font-weight:700;color:#fff;font-family:var(--font-display);font-size:1.15rem">Inkcadence</span></div>
-      <div class="who">
-        <div class="avatar" id="avatar">${esc(String(S.user).charAt(0).toUpperCase())}</div>
+    <aside class="sidebar" aria-label="Account and style packs">
+      <div class="sidebar-brand">
+        ${brandSvg('lgSide')}
         <div>
-          <div id="whoami" style="font-weight:700;color:#fff">${esc(S.user)}</div>
-          <div class="small" style="color:#7b8aa3">${Store.mode() === 'remote' ? 'synced account' : 'local account'}</div>
+          <span class="brand-name">Inkcadence</span>
+          <span class="brand-tag">your hand, on every page</span>
         </div>
       </div>
-      <h3>Style packs</h3>
-      <ul class="plist" id="packList"></ul>
-      <button class="tiny ghost" id="btnNewPack">＋ New style pack</button>
-      <div style="flex:1"></div>
-      <button class="tiny ghost" id="btnHome">Marketing</button>
-      <button class="tiny ghost" id="btnLogout">Log out</button>
+      <div class="sidebar-who">
+        <div class="avatar" id="avatar">${esc(String(S.user).charAt(0).toUpperCase())}</div>
+        <div style="min-width:0">
+          <div class="uname" id="whoami">${esc(S.user)}</div>
+          <div style="margin-top:4px"><span class="mode-pill ${remote ? 'synced' : 'on-device'}" id="accountMode">${remote ? 'synced' : 'on device'}</span></div>
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-head">
+          <h3>Style packs</h3>
+          <span class="pack-count" id="packCount">0</span>
+        </div>
+        <ul class="plist" id="packList"></ul>
+      </div>
+      <div class="sidebar-actions">
+        <button class="btn-new" id="btnNewPack">＋ New style pack</button>
+        <button class="btn-ghost" id="btnHome">Marketing</button>
+        <button class="btn-ghost" id="btnLogout">Log out</button>
+      </div>
     </aside>
     <main class="workspace">
       <div class="tabs">
@@ -413,17 +426,26 @@ async function refreshPacks() {
 function renderPackList() {
   const ul = $('#packList');
   if (!ul) return;
+  const count = $('#packCount');
+  if (count) count.textContent = String(S.packs.length);
   ul.innerHTML = '';
   if (!S.packs.length) {
-    ul.innerHTML = '<li class="muted small" style="cursor:default">No packs yet — build one in Train.</li>';
+    ul.innerHTML = '<li class="empty">No packs yet. Train your first handwriting style to see it here.</li>';
     return;
   }
   S.packs.forEach((p) => {
     const li = document.createElement('li');
     li.className = p.id === S.activeId ? 'active' : '';
-    li.innerHTML = `<span class="dot" style="background:${(p.penColours && p.penColours[0]) || '#2f6fed'}"></span><span style="flex:1">${esc(p.name)}</span>`;
+    li.title = p.name;
+    const glyphs = (p.glyphs && p.glyphs.length) || 0;
+    const pens = (p.penColours && p.penColours.length) || 0;
+    const meta = glyphs ? `${glyphs} glyphs${pens ? ' · ' + pens + ' ink' : ''}` : 'Style pack';
+    li.innerHTML = `<span class="dot" style="background:${(p.penColours && p.penColours[0]) || '#2f6fed'}"></span>
+      <div style="flex:1;min-width:0"><span class="pname">${esc(p.name)}</span><span class="pmeta">${esc(meta)}</span></div>`;
     const del = document.createElement('button');
-    del.className = 'tiny ghost';
+    del.className = 'pack-del';
+    del.type = 'button';
+    del.setAttribute('aria-label', 'Delete ' + p.name);
     del.textContent = '×';
     del.onclick = (ev) => {
       ev.stopPropagation();

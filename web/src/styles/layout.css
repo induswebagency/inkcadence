@@ -101,46 +101,149 @@
 }
 
 .sidebar {
+  position: relative;
+  overflow: hidden;
   background:
-    linear-gradient(180deg, #101926 0%, #162437 100%);
+    radial-gradient(420px 280px at 0% 0%, rgba(47, 111, 237, 0.28), transparent 60%),
+    radial-gradient(360px 240px at 100% 100%, rgba(23, 125, 79, 0.12), transparent 55%),
+    linear-gradient(185deg, #0c1524 0%, #132033 48%, #0f1a2b 100%);
   color: #c8d3e4;
-  padding: 18px;
+  padding: 20px 16px 16px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 0;
+  border-right: 1px solid rgba(120, 150, 200, 0.12);
 }
-.sidebar h3 {
-  font-family: var(--font-body);
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #7b8aa3;
-  margin: 14px 0 4px;
+.sidebar-brand {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 2px 6px 16px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(140, 170, 210, 0.12);
+}
+.sidebar-brand .brand-name {
+  font-family: var(--font-display);
   font-weight: 700;
+  color: #fff;
+  font-size: 1.2rem;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
 }
-.sidebar .who { display: flex; align-items: center; gap: 10px; }
+.sidebar-brand .brand-tag {
+  display: block;
+  font-size: 11px;
+  color: #8fa0b8;
+  font-weight: 500;
+  margin-top: 2px;
+}
+.sidebar-who {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 4px 16px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(150, 180, 220, 0.1);
+}
 .avatar {
-  width: 34px; height: 34px; border-radius: 50%;
-  background: var(--accent);
+  width: 40px; height: 40px; border-radius: 12px; flex: 0 0 auto;
+  background: linear-gradient(145deg, #4f8cff, #2f6fed 55%, #1e4fbe);
   display: grid; place-items: center;
-  font-weight: 700; color: #fff;
+  font-weight: 700; color: #fff; font-size: 15px;
+  box-shadow: 0 6px 16px rgba(47, 111, 237, 0.35);
 }
-.plist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.sidebar-who .uname { font-weight: 700; color: #fff; font-size: 14px; }
+.mode-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+  color: #9eb0c8; padding: 2px 7px; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(150, 180, 220, 0.12);
+}
+.mode-pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #7b8aa3; }
+.mode-pill.on-device::before { background: #8fb6ff; }
+.mode-pill.synced::before { background: #3ecf8e; }
+.sidebar-section { position: relative; display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.sidebar-section-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 6px 8px;
+}
+.sidebar-section-head h3 {
+  font-family: var(--font-body);
+  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: #7b8aa3; margin: 0; font-weight: 700;
+}
+.pack-count {
+  font-size: 11px; font-weight: 700; color: #9eb0c8;
+  background: rgba(255, 255, 255, 0.06); border-radius: 999px; padding: 2px 8px;
+}
+.plist {
+  list-style: none; margin: 0; padding: 0 2px 8px;
+  display: flex; flex-direction: column; gap: 7px;
+  overflow: auto; max-height: min(48vh, 420px);
+  scrollbar-width: thin; scrollbar-color: #2a3c55 transparent;
+}
 .plist li {
-  background: #162437;
-  border: 1px solid #223449;
-  border-radius: 10px;
-  padding: 9px 10px;
+  position: relative;
+  background: rgba(22, 36, 55, 0.85);
+  border: 1px solid rgba(60, 90, 130, 0.28);
+  border-radius: 12px;
+  padding: 10px 10px 10px 12px;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   gap: 8px;
   align-items: center;
   font-size: 13px;
+  color: #d7e0ec;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
-.plist li:hover { background: #1b2c42; }
-.plist li.active { border-color: var(--accent); background: #17263c; }
-.plist .dot { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; }
+.plist li.empty {
+  cursor: default; border-style: dashed; background: transparent;
+  color: #8fa0b8; font-size: 12.5px; line-height: 1.45; padding: 14px 12px;
+  justify-content: flex-start;
+}
+.plist li:hover { background: #1b2c42; border-color: rgba(90, 130, 190, 0.35); }
+.plist li.active {
+  border-color: rgba(47, 111, 237, 0.75);
+  background: linear-gradient(90deg, rgba(47, 111, 237, 0.18), rgba(23, 38, 60, 0.9));
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.plist .dot {
+  width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.08);
+}
+.plist .pname {
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600;
+}
+.plist .pmeta {
+  display: block; font-size: 10.5px; color: #7b8aa3; font-weight: 500; margin-top: 2px;
+}
+.plist .pack-del {
+  opacity: 0.55; background: transparent; color: #aebcd0; border: 0; border-radius: 8px;
+  padding: 4px 8px; font-size: 14px; line-height: 1; cursor: pointer; box-shadow: none;
+}
+.plist li:hover .pack-del, .plist li.active .pack-del { opacity: 1; }
+.plist .pack-del:hover { background: rgba(180, 35, 42, 0.2); color: #ffb4b4; }
+.sidebar-actions {
+  position: relative; display: flex; flex-direction: column; gap: 8px;
+  padding-top: 12px; margin-top: 4px;
+  border-top: 1px solid rgba(140, 170, 210, 0.12);
+}
+.sidebar-actions .btn-new {
+  width: 100%; border-radius: 11px; padding: 11px 14px; font-weight: 700; font-size: 13px;
+  background: linear-gradient(180deg, #3d7af5, #2f6fed);
+  box-shadow: 0 8px 20px rgba(47, 111, 237, 0.28);
+}
+.sidebar-actions .btn-ghost {
+  width: 100%; border-radius: 11px; padding: 9px 14px; font-size: 12.5px; font-weight: 600;
+  background: rgba(255, 255, 255, 0.04); color: #b7c4d6;
+  border: 1px solid rgba(150, 180, 220, 0.12); box-shadow: none;
+}
+.sidebar-actions .btn-ghost:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
 
 .workspace {
   padding: 22px clamp(16px, 3vw, 28px) 60px;
