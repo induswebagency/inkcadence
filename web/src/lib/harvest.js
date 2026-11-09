@@ -29,8 +29,10 @@ var FREQ = 'etaoinshrdlcumwfgypbvkjxqzETAOINSHRDLCUMWFGYPBVKJXQZ0123456789';
       acc += hist[i];
       if (acc >= target) { paper = i; break; }
     }
+    /* Phone photos often have warmer/dimmer paper — widen ink cut. */
+    var cut = paper - (paper < 190 ? 36 : 42);
+    if (paper < 170) cut = paper - 28;
     var mask = new Uint8Array(n);
-    var cut = paper - 42;
     for (p = 0; p < n; p++) mask[p] = lum[p] < cut ? 1 : 0;
     return { mask: mask, lum: lum, w: w, h: h, scale: scale, paper: paper, canvas: c };
   }
