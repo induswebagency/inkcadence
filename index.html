@@ -339,25 +339,31 @@
     <!-- ---------- TRAIN ---------- -->
     <section id="tabTrain">
       <div class="card">
-        <h2>Build a style pack</h2>
-        <p class="muted small">Two inputs. Old assignments teach the <b>look</b> (pen colours, slant, stroke weight, spacing). The template sheet teaches the <b>letterforms</b>.</p>
+        <h2>Train from a full assignment</h2>
+        <p class="muted small">Upload old <b>written assignment pages</b> (with headings and body text). Inkcadence analyses ink, slant, stroke, spacing and heading patterns — no separate alphabet sheet needed. You can also start from one of the <b>10 built-in writing styles</b>.</p>
         <div class="field">
           <label>Pack name</label>
-          <input id="packName" placeholder="e.g. My blue-pen hand, Nov 2025">
+          <input id="packName" placeholder="e.g. My Nov assignment hand">
+        </div>
+        <div class="field">
+          <label>Base writing style</label>
+          <select id="baseStyle"></select>
+          <div class="small muted" style="margin-top:6px">Auto-match picks the closest built-in hand from your pages. Or lock a specific best/normal style.</div>
         </div>
 
-        <div class="grid2">
-          <div class="drop">
-            <h4>A · Old assignments <span class="muted small">(recommended)</span></h4>
-            <div class="small">1–8 photos or scans of pages you actually wrote. Used for pen colours, slant, stroke width and line spacing.</div>
-            <input type="file" id="fileRef" accept="image/*" multiple hidden>
-            <button class="ghost tiny" id="btnPickRef">Choose images</button>
-            <div class="thumbs" id="thumbsRef"></div>
-          </div>
+        <div class="drop">
+          <h4>Old assignment pages</h4>
+          <div class="small">1–8 photos or scans of full pages you wrote — headings, numbered answers, everything. Used to learn your ink colours, slant, stroke weight, line spacing and neatness.</div>
+          <input type="file" id="fileRef" accept="image/*" multiple hidden>
+          <button class="ghost tiny" id="btnPickRef">Upload assignment pages</button>
+          <div class="thumbs" id="thumbsRef"></div>
+        </div>
 
-          <div class="drop">
-            <h4>B · Template sheet <span class="muted small">(needed for your real letterforms)</span></h4>
-            <div class="small">Print the sheet, write every character once, then photograph or scan it flat.</div>
+        <!-- Optional advanced sheet kept for power users, collapsed -->
+        <details style="margin-top:14px">
+          <summary class="small muted" style="cursor:pointer">Optional: alphabet sheet (advanced)</summary>
+          <div class="drop" style="margin-top:10px">
+            <div class="small">Only if you want captured letterforms. Most users can skip this.</div>
             <div class="row" style="margin:8px 0">
               <a class="tiny" href="sheet.html" target="_blank" style="text-decoration:underline">Open printable sheet ↗</a>
             </div>
@@ -365,7 +371,6 @@
             <button class="ghost tiny" id="btnPickSheet">Upload filled sheet</button>
             <div id="sheetWrap" hidden>
               <canvas id="sheetCanvas"></canvas>
-              <div class="small muted" style="margin-top:6px">Drag the four sliders until the grid sits exactly over your writing cells.</div>
               <div class="grid2" style="gap:6px;margin-top:8px">
                 <div><label class="small muted">Left %</label><input id="gx" type="range" min="0" max="60" value="4.5" step="0.5"></div>
                 <div><label class="small muted">Top %</label><input id="gy" type="range" min="0" max="70" value="8.5" step="0.5"></div>
@@ -375,17 +380,17 @@
               </div>
             </div>
           </div>
-        </div>
+        </details>
 
         <div class="row" style="margin-top:16px">
-          <button id="btnBuild">Analyze &amp; save style pack</button>
+          <button id="btnBuild">Analyze assignment &amp; save pack</button>
           <span class="small muted" id="buildState"></span>
         </div>
         <div id="buildMsg"></div>
       </div>
 
       <div class="card" id="resultCard" hidden>
-        <h3>Extracted style</h3>
+        <h3>Learned patterns</h3>
         <div id="resultBody"></div>
       </div>
     </section>
@@ -423,11 +428,11 @@ that has no labels attached.</textarea>
               <div class="swatch" id="wColor"></div>
             </div>
             <div class="field">
-              <label>Paper</label>
+              <label>Page style</label>
               <select id="wPaper">
-                <option value="ruled">Ruled (assignment)</option>
-                <option value="grid">Grid</option>
-                <option value="plain">Plain</option>
+                <option value="ruled">Lined A4 (assignment lines)</option>
+                <option value="plain">Blank A4</option>
+                <option value="grid">Grid A4</option>
               </select>
             </div>
             <div class="field">
@@ -473,6 +478,7 @@ that has no labels attached.</textarea>
 <script src="js/imaging.js"></script>
 <script src="js/glyphs.js"></script>
 <script src="js/render.js"></script>
+<script src="js/presets.js"></script>
 <script src="js/app.js"></script>
 <script>
 /* Tells the user which storage driver actually won, instead of silently guessing. */

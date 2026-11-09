@@ -61,10 +61,37 @@
 
   function syncAccountMode() {
     var el = $('accountMode');
-    if (!el || !global.Store) return;
+    if (!el || !window.Store) return;
     var remote = Store.mode() === 'remote';
     el.textContent = remote ? 'synced' : 'on device';
     el.className = 'mode-pill ' + (remote ? 'synced' : 'on-device');
+  }
+
+  function builtinPacks() {
+    return (window.Presets && Presets.list) ? Presets.list() : [];
+  }
+
+  function allPacks() {
+    return builtinPacks().concat(S.packs || []);
+  }
+
+  function findPack(id) {
+    var all = allPacks();
+    for (var i = 0; i < all.length; i++) if (all[i].id === id) return all[i];
+    return null;
+  }
+
+  function fillBaseStyleSelect() {
+    var sel = $('baseStyle');
+    if (!sel) return;
+    var builtins = builtinPacks();
+    sel.innerHTML = '<option value="auto">Auto-match from my pages</option>';
+    builtins.forEach(function (p) {
+      var opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = p.name + (p.quality === 'best' ? ' · best' : ' · normal');
+      sel.appendChild(opt);
+    });
   }
 
   function afterLogin(user) {
@@ -72,6 +99,7 @@
     $('whoami').textContent = user;
     $('avatar').textContent = user.charAt(0).toUpperCase();
     syncAccountMode();
+    fillBaseStyleSelect();
     showApp();
     return refreshPacks();
   }
@@ -104,31 +132,37 @@
   function refreshPacks() {
     return Store.packs(S.user).then(function (list) {
       S.packs = list || [];
-      if (!S.activeId && S.packs.length) S.activeId = S.packs[0].id;
-      var exists = S.packs.some(function (p) { return p.id === S.activeId; });
-      if (!exists) S.activeId = S.packs.length ? S.packs[0].id : null;
+      var all = allPacks();
+      if (!S.activeId && all.length) S.activeId = all[0].id;
+      var exists = all.some(function (p) { return p.id === S.activeId; });
+      if (!exists) S.activeId = all.length ? all[0].id : null;
       renderPackList();
       renderPackSelect();
       return S.packs;
     });
   }
 
+  function activePack() {
+    return findPack(S.activeId);
+  }
+
   function renderPackList() {
     var ul = $('packList');
     var count = $('packCount');
-    if (count) count.textContent = String(S.packs.length);
+    var all = allPacks();
+    if (count) count.textContent = String(all.length);
     ul.innerHTML = '';
-    if (!S.packs.length) {
+    if (!all.length) {
       var empty = document.createElement('li');
       empty.className = 'empty';
-      empty.textContent = 'No packs yet. Train your first handwriting style to see it here.';
+      empty.textContent = 'No packs yet. Built-in styles load with the app — try Write, or train from an assignment.';
       ul.appendChild(empty);
       return;
     }
-    S.packs.forEach(function (p) {
+    all.forEach(function (p) {
       var li = document.createElement('li');
       li.className = p.id === S.activeId ? 'active' : '';
-      li.title = p.name;
+      li.title = p.description || p.name;
 
       var dot = document.createElement('span');
       dot.className = 'dot';
@@ -142,54 +176,75 @@
       name.textContent = p.name;
       var meta = document.createElement('span');
       meta.className = 'pmeta';
-      var glyphs = (p.glyphs && p.glyphs.length) || (p.data && p.data.glyphs && p.data.glyphs.length) || 0;
-      var pens = (p.penColours && p.penColours.length) || 0;
-      meta.textContent = glyphs ? (glyphs + ' glyphs' + (pens ? ' · ' + pens + ' ink' : '')) : 'Style pack';
+      if (p.builtin) {
+        meta.textContent = (p.quality === 'best' ? 'Built-in · best hand' : 'Built-in · normal hand');
+      } else {
+        var glyphs = (p.glyphs && p.glyphs.length) || 0;
+        var pats = (p.stats && p.stats.patterns) || {};
+        meta.textContent = pats.qualityGuess
+          ? ('From pages · ' + pats.qualityGuess)
+          : (glyphs ? glyphs + ' glyphs' : 'Custom from assignment');
+      }
       body.appendChild(name);
       body.appendChild(meta);
 
-      var del = document.createElement('button');
-      del.className = 'pack-del';
-      del.type = 'button';
-      del.setAttribute('aria-label', 'Delete ' + p.name);
-      del.textContent = '×';
-      del.onclick = function (ev) {
-        ev.stopPropagation();
-        if (!confirm('Delete style pack "' + p.name + '"?')) return;
-        Store.deletePack(S.user, p.id).then(function (list) {
-          S.packs = list;
-          if (S.activeId === p.id) S.activeId = list.length ? list[0].id : null;
-          renderPackList();
-          renderPackSelect();
-        });
-      };
       li.onclick = function () {
         S.activeId = p.id;
         renderPackList();
         renderPackSelect();
-        showResult(p);
+        applyPackDefaults(p);
+        if (!p.builtin) showResult(p);
       };
+
       li.appendChild(dot);
       li.appendChild(body);
-      li.appendChild(del);
+      if (!p.builtin) {
+        var del = document.createElement('button');
+        del.className = 'pack-del';
+        del.type = 'button';
+        del.setAttribute('aria-label', 'Delete ' + p.name);
+        del.textContent = '×';
+        del.onclick = function (ev) {
+          ev.stopPropagation();
+          if (!confirm('Delete style pack "' + p.name + '"?')) return;
+          Store.deletePack(S.user, p.id).then(function (list) {
+            S.packs = list;
+            if (S.activeId === p.id) S.activeId = allPacks()[0] ? allPacks()[0].id : null;
+            renderPackList();
+            renderPackSelect();
+          });
+        };
+        li.appendChild(del);
+      }
       ul.appendChild(li);
     });
+  }
+
+  function applyPackDefaults(pack) {
+    if (!pack) return;
+    if ($('wHeading') && pack.headingStyle) $('wHeading').value = pack.headingStyle;
+    if ($('wJitter') && pack.defaultJitter != null) $('wJitter').value = String(Math.round(pack.defaultJitter * 100));
+    if ($('wSize') && pack.defaultSize) $('wSize').value = String(pack.defaultSize);
+    syncPenSwatches();
   }
 
   function renderPackSelect() {
     var sel = $('wPack');
     sel.innerHTML = '';
-    if (!S.packs.length) {
+    var all = allPacks();
+    if (!all.length) {
       var o = document.createElement('option');
       o.textContent = '— no style pack yet —';
       o.value = '';
       sel.appendChild(o);
       return;
     }
-    S.packs.forEach(function (p) {
+    all.forEach(function (p) {
       var o = document.createElement('option');
       o.value = p.id;
-      o.textContent = p.name;
+      o.textContent = p.builtin
+        ? (p.name + (p.quality === 'best' ? ' ★' : ''))
+        : p.name;
       if (p.id === S.activeId) o.selected = true;
       sel.appendChild(o);
     });
@@ -199,17 +254,14 @@
   $('wPack').onchange = function () {
     S.activeId = this.value;
     renderPackList();
+    applyPackDefaults(activePack());
     syncPenSwatches();
   };
-
-  function activePack() {
-    for (var i = 0; i < S.packs.length; i++) if (S.packs[i].id === S.activeId) return S.packs[i];
-    return null;
-  }
 
   function syncPenSwatches() {
     var p = activePack();
     var box = $('wColor');
+    if (!box) return;
     box.innerHTML = '';
     var colours = (p && p.penColours && p.penColours.length) ? p.penColours : ['#1b2a4a', '#123a8c', '#111111'];
     S.pen = colours[0];
@@ -275,7 +327,7 @@
         $('thumbsRef').appendChild(t);
       });
       card($('buildMsg'), S.refImages.length
-        ? S.refImages.length + ' page(s) ready. Add a template sheet for your letterforms, then analyze.'
+        ? S.refImages.length + ' assignment page(s) ready. Pick a base style (or Auto-match) and analyze.'
         : '<span>Could not decode those files.</span>', S.refImages.length ? '' : 'bad');
     });
   };
@@ -352,26 +404,36 @@
   }
 
   /* ---------------- training: build ---------------- */
+  function headingFromPatterns(patterns, baseHeading) {
+    if (baseHeading) return baseHeading;
+    var hw = patterns && patterns.headingWeight;
+    if (hw === 'strong') return 'double';
+    if (hw === 'none') return 'none';
+    return 'underline';
+  }
+
   $('btnBuild').onclick = function () {
     var name = $('packName').value.trim();
     if (!name) { card($('buildMsg'), 'Give the style pack a name first.', 'bad'); return; }
-    if (!S.refImages.length && !S.sheetSrc) {
-      card($('buildMsg'), 'Add at least one old assignment or a template sheet.', 'bad');
+    if (!S.refImages.length) {
+      card($('buildMsg'), 'Upload at least one full written assignment page first.', 'bad');
       return;
     }
 
     var btn = $('btnBuild');
     btn.disabled = true;
     $('buildState').textContent = 'working…';
-    card($('buildMsg'), 'Analyzing your pages…');
+    card($('buildMsg'), 'Reading ink, slant, spacing and heading patterns…');
 
     setTimeout(function () {
       try {
-        var stats = null;
-        if (S.refImages.length) {
-          var analyses = S.refImages.map(function (c) { return Imaging.analyze(c); });
-          stats = Imaging.mergeAnalyses(analyses);
-        }
+        var analyses = S.refImages.map(function (c) { return Imaging.analyze(c); });
+        var stats = Imaging.mergeAnalyses(analyses);
+
+        var baseId = ($('baseStyle') && $('baseStyle').value) || 'auto';
+        var base = (baseId === 'auto')
+          ? Presets.matchFromStats(stats)
+          : (Presets.byId(baseId) || Presets.matchFromStats(stats));
 
         var glyphs = [], missing = [], cellH = 92, cellW = 70;
         if (S.sheetSrc) {
@@ -383,23 +445,14 @@
           cellW = rect.w / Glyphs.COLS;
         }
 
-        if (!stats) {
-          stats = {
-            pages: 0,
-            slant: 0.1,
-            strokeWidth: 3,
-            lineGap: Math.round(cellH * 1.7),
-            inkRatio: 0,
-            paper: '#fdfcf7',
-            palette: [{ hex: '#1b2a4a', kind: 'pen', share: 100 }],
-            thumbs: []
-          };
-        }
-
-        var pens = stats.palette.filter(function (c) { return c.kind !== 'faint'; })
+        var pens = (stats.palette || []).filter(function (c) { return c.kind !== 'faint'; })
           .map(function (c) { return c.hex; });
-        if (!pens.length) pens = ['#1b2a4a'];
+        if (!pens.length) pens = (base.penColours || ['#1b2a4a']).slice();
         pens = pens.slice(0, 4);
+
+        var pats = stats.patterns || {};
+        var jitter = base.defaultJitter != null ? base.defaultJitter
+          : (pats.qualityGuess === 'best' ? 0.28 : 0.55);
 
         var pack = {
           id: 'pk_' + Date.now().toString(36),
@@ -411,14 +464,28 @@
           missing: missing,
           stats: stats,
           penColours: pens,
-          paper: stats.paper
+          paper: stats.paper || '#fdfcf7',
+          slant: stats.slant,
+          strokeWidth: stats.strokeWidth,
+          lineGap: stats.lineGap || base.lineGap,
+          fontFamily: glyphs.length ? null : base.fontFamily,
+          headingStyle: headingFromPatterns(pats, base.headingStyle),
+          defaultJitter: jitter,
+          defaultSize: base.defaultSize || 34,
+          tracking: base.tracking != null ? base.tracking : 0.55,
+          baseStyleId: base.id,
+          baseStyleName: base.name,
+          quality: pats.qualityGuess || base.quality
         };
 
         Store.savePack(S.user, pack).then(function () {
           btn.disabled = false;
           $('buildState').textContent = '';
           S.activeId = pack.id;
-          return refreshPacks().then(function () { showResult(pack); });
+          return refreshPacks().then(function () {
+            applyPackDefaults(pack);
+            showResult(pack);
+          });
         }).catch(function (e) {
           btn.disabled = false;
           $('buildState').textContent = '';
@@ -435,21 +502,25 @@
   function showResult(pack) {
     if (!pack) return;
     var st = pack.stats || {};
+    var pats = st.patterns || {};
     var body = $('resultBody');
     var html = '';
 
     html += '<div class="stats">' +
-      stat(st.pages || 0, 'reference pages') +
-      stat(st.slant ? (st.slant * 100).toFixed(0) + '%' : '—', 'slant') +
-      stat(st.strokeWidth || '—', 'stroke px') +
+      stat(st.pages || 0, 'assignment pages') +
+      stat(st.slant != null ? (st.slant * 100).toFixed(0) + '%' : '—', 'slant') +
+      stat(st.strokeWidth != null ? st.strokeWidth : '—', 'stroke px') +
       stat(st.lineGap || '—', 'line spacing') +
-      stat((pack.glyphs || []).length, 'letterforms') +
+      stat(pats.qualityGuess || pack.quality || '—', 'hand quality') +
       '</div>';
 
-    if (!(pack.glyphs || []).length) {
-      html += '<div class="hint" style="margin-bottom:12px">No letterforms yet — this pack only knows the <b>look</b> ' +
-        '(ink, slant, spacing). Writing will use a generic hand. Add a filled <b>template sheet</b> to capture your own letterforms.</div>';
-    }
+    html += '<div class="hint" style="margin-bottom:12px">Matched writing style: <b>' +
+      esc(pack.baseStyleName || 'built-in') + '</b>' +
+      (pack.headingStyle ? (' · headings: ' + esc(pack.headingStyle)) : '') +
+      (pats.headingWeight ? (' · page heading weight: ' + esc(pats.headingWeight)) : '') +
+      '. Writing uses this hand with your detected ink and slant' +
+      ((pack.glyphs || []).length ? ', plus your captured letterforms' : '') +
+      '.</div>';
 
     if (pack.penColours && pack.penColours.length) {
       html += '<div class="field"><label class="small muted">Detected inks</label><div class="swatch" style="margin-top:4px">';
@@ -460,12 +531,12 @@
     }
 
     if (pack.missing && pack.missing.length) {
-      html += '<p class="small muted"><b>' + pack.missing.length + '</b> cell(s) were empty: ' +
-        pack.missing.join(' ') + ' — those characters will fall back to a gap. Re-scan the sheet to fix.</p>';
+      html += '<p class="small muted"><b>' + pack.missing.length + '</b> alphabet cell(s) were empty: ' +
+        pack.missing.join(' ') + '</p>';
     }
 
     if ((pack.glyphs || []).length) {
-      html += '<div class="field"><label class="small muted">Extracted letterforms</label><div class="glyphgrid">';
+      html += '<div class="field"><label class="small muted">Optional letterforms</label><div class="glyphgrid">';
       pack.glyphs.slice(0, 90).forEach(function (g) {
         html += '<figure><img src="' + g.url + '" alt="' + esc(g.ch) + '"><figcaption>' + esc(g.ch) + '</figcaption></figure>';
       });
@@ -473,14 +544,14 @@
     }
 
     if (st.thumbs && st.thumbs.length) {
-      html += '<div class="field"><label class="small muted">Reference pages</label><div class="thumbs">';
+      html += '<div class="field"><label class="small muted">Assignment pages</label><div class="thumbs">';
       st.thumbs.slice(0, 6).forEach(function (t) { html += '<img src="' + t + '">'; });
       html += '</div></div>';
     }
 
     body.innerHTML = html;
     $('resultCard').hidden = false;
-    card($('buildMsg'), 'Saved to <b>' + esc(pack.name) + '</b> in your account.', '');
+    card($('buildMsg'), 'Saved <b>' + esc(pack.name) + '</b> — switch to Write to generate on blank or lined A4.', '');
   }
 
   function stat(v, label) {
@@ -495,13 +566,14 @@
   /* ---------------- writing ---------------- */
   $('btnRender').onclick = function () {
     var pack = activePack();
-    if (!pack) { card($('writeMsg'), 'Create a style pack in the Train tab first.', 'bad'); return; }
+    if (!pack) { card($('writeMsg'), 'Pick a built-in style or train from an assignment first.', 'bad'); return; }
 
     var btn = $('btnRender');
     btn.disabled = true;
     card($('writeMsg'), 'Laying out pages…');
 
-    Glyphs.hydrate(pack).then(function () {
+    var ready = (pack.glyphs && pack.glyphs.length) ? Glyphs.hydrate(pack) : Promise.resolve(pack);
+    ready.then(function () {
       var pages = Rendering.renderPages({
         text: $('wText').value,
         pack: pack,
@@ -512,6 +584,8 @@
         paper: $('wPaper').value,
         paperColour: pack.paper || '#fdfcf7',
         headingStyle: $('wHeading').value,
+        fontFamily: pack.fontFamily,
+        tracking: pack.tracking,
         watermark: $('wMark').checked
       });
 
@@ -576,6 +650,7 @@
   };
 
   /* ---------------- boot ---------------- */
+  fillBaseStyleSelect();
   Promise.resolve(Store.ready).then(function () {
     syncAccountMode();
     return Store.currentUser();

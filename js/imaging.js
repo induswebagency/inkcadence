@@ -293,6 +293,8 @@
     var lines = estimateLines(ink2, deskewed.w, deskewed.h);
     var palette = clusterColors(g.data, g.w, g.h);
     var strokeWidth = estimateStroke(ink2, deskewed.w, deskewed.h);
+    var conf = +strokeConfidence(ink2, deskewed.w, deskewed.h, strokeWidth).toFixed(3);
+    var patterns = estimatePatterns(ink2, deskewed.w, deskewed.h, lines, conf, slant);
 
     var thumb = canvas(420, 420 * g.h / g.w);
     thumb.getContext('2d').drawImage(g.canvas, 0, 0, thumb.width, thumb.height);
@@ -304,12 +306,43 @@
       inkRatio: +ratio.toFixed(4),
       slant: +slant.toFixed(3),
       strokeWidth: strokeWidth,
-      strokeConfidence: +strokeConfidence(ink2, deskewed.w, deskewed.h, strokeWidth).toFixed(3),
+      strokeConfidence: conf,
       lineGap: lines.gap,
       lineBands: lines.bands,
       paper: paperColour(g.data, g.w, g.h),
       palette: palette,
+      patterns: patterns,
       thumb: thumb.toDataURL('image/jpeg', 0.6)
+    };
+  }
+
+  /* Pattern cues from a full assignment page (no alphabet sheet). */
+  function estimatePatterns(ink, w, h, lines, conf, slant) {
+    var bands = lines.bands || 0;
+    var gap = lines.gap || Math.round(h / 30);
+    var topInk = 0, midInk = 0, botInk = 0, i;
+    var topEnd = Math.floor(h * 0.22), midEnd = Math.floor(h * 0.72);
+    for (i = 0; i < ink.length; i++) {
+      if (!ink[i]) continue;
+      var y = (i / w) | 0;
+      if (y < topEnd) topInk++;
+      else if (y < midEnd) midInk++;
+      else botInk++;
+    }
+    var total = Math.max(1, topInk + midInk + botInk);
+    var topShare = topInk / total;
+    /* Headings / titles usually dump more ink in the upper band. */
+    var headingWeight = topShare > 0.34 ? 'strong' : (topShare > 0.22 ? 'medium' : 'none');
+    var spacingRegular = bands > 4 && gap > 18 && gap < h * 0.12 ? 0.8 : 0.45;
+    var neatness = Math.max(0.15, Math.min(0.98,
+      conf * 0.55 + spacingRegular * 0.3 + (1 - Math.min(1, Math.abs(slant) * 2)) * 0.15
+    ));
+    return {
+      neatness: +neatness.toFixed(3),
+      headingWeight: headingWeight,
+      topInkShare: +topShare.toFixed(3),
+      lineBands: bands,
+      qualityGuess: neatness >= 0.72 ? 'best' : 'normal'
     };
   }
 
@@ -341,6 +374,17 @@
       });
 
     var paper = Object.keys(paperVotes).sort(function (a, b) { return paperVotes[b] - paperVotes[a]; })[0];
+    var neatVals = [], headingVotes = { strong: 0, medium: 0, none: 0 };
+    list.forEach(function (a) {
+      if (a.patterns) {
+        if (a.patterns.neatness != null) neatVals.push(a.patterns.neatness);
+        if (a.patterns.headingWeight) headingVotes[a.patterns.headingWeight] = (headingVotes[a.patterns.headingWeight] || 0) + 1;
+      }
+    });
+    var headingWeight = Object.keys(headingVotes).sort(function (a, b) {
+      return headingVotes[b] - headingVotes[a];
+    })[0] || 'medium';
+    var neatness = neatVals.length ? +median(neatVals.slice()).toFixed(3) : (confs.length ? +median(confs.slice()).toFixed(3) : 0.5);
     return {
       pages: list.length,
       slant: +median(slants.slice()).toFixed(3),
@@ -350,6 +394,11 @@
       inkRatio: +median(ratios.slice()).toFixed(4),
       paper: paper || '#fdfcf7',
       palette: palette,
+      patterns: {
+        neatness: neatness,
+        headingWeight: headingWeight,
+        qualityGuess: neatness >= 0.72 ? 'best' : 'normal'
+      },
       thumbs: list.map(function (a) { return a.thumb; })
     };
   }

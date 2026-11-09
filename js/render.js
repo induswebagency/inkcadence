@@ -189,12 +189,13 @@
     return x;
   }
 
-  function drawFontLine(ctx, line, x0, baseline, family, size, colour, jitter, r) {
+  function drawFontLine(ctx, line, x0, baseline, family, size, colour, jitter, r, shearBase) {
     ctx.font = size + 'px ' + family;
     ctx.textBaseline = 'alphabetic';
     ctx.fillStyle = colour;
     var drift = gauss(r) * jitter * 2.4;
     var x = x0;
+    var shear0 = shearBase == null ? 0.10 : shearBase;
     for (var i = 0; i < line.length; i++) {
       var ch = line[i];
       var adv = ctx.measureText(ch).width;
@@ -202,7 +203,7 @@
       ctx.save();
       ctx.translate(x, baseline + drift + gauss(r) * jitter * size * 0.05);
       ctx.rotate(gauss(r) * jitter * 0.05);
-      ctx.transform(1, 0, 0.10 + gauss(r) * jitter * 0.05, 1, 0, 0);
+      ctx.transform(1, 0, shear0 + gauss(r) * jitter * 0.05, 1, 0, 0);
       ctx.globalAlpha = 0.82 + r() * 0.18;
       ctx.fillText(ch, 0, 0);
       ctx.restore();
@@ -239,10 +240,12 @@
     var colour = opts.penColour || '#1b2a4a';
     var paperStyle = opts.paper || 'ruled';
     var paperColour = opts.paperColour || '#fdfcf7';
-    var family = opts.fontFamily || 'cursive';
-    var tracking = opts.tracking == null ? 0.8 : opts.tracking;
-    var headingStyle = opts.headingStyle || 'underline';
+    var family = opts.fontFamily || pack.fontFamily || '"Segoe Script","Ink Free",cursive';
+    var tracking = opts.tracking != null ? opts.tracking : (pack.tracking != null ? pack.tracking : 0.8);
+    var headingStyle = opts.headingStyle || pack.headingStyle || 'underline';
     var watermark = opts.watermark !== false;
+    var shearBase = (pack.slant != null ? pack.slant : (pack.stats && pack.stats.slant)) || 0.1;
+    shearBase = Math.max(-0.2, Math.min(0.35, 0.08 + shearBase));
 
     var W = PAGE_W, H = PAGE_H;
     var marginL = 136, marginR = W - 104;
@@ -286,7 +289,7 @@
         var mm = buildMetrics(pack, fs, tracking);
         lineW = drawGlyphLine(ctx, ln.text, marginL, y + fs, mm, colour, jitter, r, fs);
       } else {
-        drawFontLine(ctx, ln.text, marginL, y + fs, family, fs, colour, jitter, r);
+        drawFontLine(ctx, ln.text, marginL, y + fs, family, fs, colour, jitter, r, shearBase);
         ctx.font = fs + 'px ' + family;
         lineW = marginL + ctx.measureText(ln.text).width;
       }
