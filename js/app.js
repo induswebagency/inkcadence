@@ -483,12 +483,22 @@
         }
 
         var harvested = [];
+        var hadSheetGlyphs = glyphs.length > 0;
         if (window.Harvest && S.refImages.length) {
-          harvested = Harvest.harvestFromPages(S.refImages, { maxCrops: 100, maxPerChar: 4 });
+          harvested = Harvest.harvestFromPages(S.refImages, { maxCrops: 120, maxPerChar: 4 });
           glyphs = Harvest.mergeVariants(glyphs, harvested);
-          if (harvested.length && harvested[0].cellH) {
-            cellH = harvested[0].cellH;
-            cellW = harvested[0].cellW;
+          /* Only adopt harvested cell metrics when there is no alphabet sheet. */
+          if (!hadSheetGlyphs && harvested.length) {
+            var med = Harvest.medianCellMetrics
+              ? Harvest.medianCellMetrics(harvested)
+              : null;
+            if (med) {
+              cellH = med.cellH;
+              cellW = med.cellW;
+            } else if (harvested[0].cellH) {
+              cellH = harvested[0].cellH;
+              cellW = harvested[0].cellW;
+            }
           }
         }
 
@@ -510,9 +520,15 @@
           else if (bVotes && !hVotes) pats.headingWeight = 'none';
           stats.patterns = pats;
         }
-        var jitter = base.defaultJitter != null ? base.defaultJitter
-          : (pats.qualityGuess === 'best' ? 0.28 : 0.55);
+        var jitter;
+        if (pats.neatness != null) {
+          jitter = pats.neatness >= 0.72 ? 0.28 : (pats.neatness >= 0.5 ? 0.48 : 0.7);
+        } else {
+          jitter = base.defaultJitter != null ? base.defaultJitter
+            : (pats.qualityGuess === 'best' ? 0.28 : 0.55);
+        }
         var scored = window.Assignment ? Assignment.styleScore(stats) : { score: 70 };
+        var paperStyle = pats.paperStyle || stats.paperStyle || 'ruled';
 
         var pack = {
           id: 'pk_' + Date.now().toString(36),
@@ -524,8 +540,10 @@
           missing: missing,
           harvestedCount: harvested.length,
           stats: stats,
+          patterns: pats,
           penColours: pens,
           paper: stats.paper || '#fdfcf7',
+          paperStyle: paperStyle,
           slant: stats.slant,
           strokeWidth: stats.strokeWidth,
           lineGap: stats.lineGap || base.lineGap,

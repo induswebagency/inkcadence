@@ -55,6 +55,26 @@ async function main() {
   assert.ok(pagesYml.includes('_site/classic'), 'Pages deploys classic writer');
   assert.ok(pagesYml.includes('sync_engines_to_web'), 'Pages syncs engines');
 
+  const Harvest = await loadModule('harvest', 'Harvest');
+  assert.ok(typeof Harvest.harvestFromPages === 'function', 'synced Harvest');
+  assert.ok(typeof Harvest.medianCellMetrics === 'function', 'synced medianCellMetrics');
+
+  const Imaging = await loadModule('imaging', 'Imaging');
+  assert.ok(typeof Imaging.guessPaperStyle === 'function', 'synced guessPaperStyle');
+
+  const assignDir = path.join(__dirname, 'fixtures', 'samples', 'assignments');
+  if (fs.existsSync(assignDir)) {
+    const names = fs.readdirSync(assignDir).filter((f) => f.endsWith('.jpg'));
+    assert.ok(names.length >= 8, 'assignment fixtures present');
+    assert.ok(names.some((n) => n.includes('exam_lined')), 'lined exam fixture');
+    assert.ok(names.some((n) => n.includes('essay_blank')), 'blank essay fixture');
+    assert.ok(names.some((n) => n.includes('lab_grid')), 'lab grid fixture');
+    assert.ok(names.some((n) => n.includes('phone')), 'phone-photo fixture');
+  }
+
+  const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
+  assert.ok(pkg.scripts['fixtures:assignments'], 'fixtures:assignments script');
+
   console.log('realism.test.js ok');
 }
 

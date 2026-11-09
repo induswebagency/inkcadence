@@ -619,12 +619,19 @@ function buildDraftPack() {
     cellW = rect.w / Glyphs.COLS;
   }
   let harvested = [];
+  const hadSheetGlyphs = glyphs.length > 0;
   if (S.refImages.length) {
-    harvested = Harvest.harvestFromPages(S.refImages, { maxCrops: 100, maxPerChar: 4 });
+    harvested = Harvest.harvestFromPages(S.refImages, { maxCrops: 120, maxPerChar: 4 });
     glyphs = Harvest.mergeVariants(glyphs, harvested);
-    if (harvested[0]) {
-      cellH = harvested[0].cellH || cellH;
-      cellW = harvested[0].cellW || cellW;
+    if (!hadSheetGlyphs && harvested.length) {
+      const med = Harvest.medianCellMetrics ? Harvest.medianCellMetrics(harvested) : null;
+      if (med) {
+        cellH = med.cellH;
+        cellW = med.cellW;
+      } else if (harvested[0].cellH) {
+        cellH = harvested[0].cellH;
+        cellW = harvested[0].cellW;
+      }
     }
   }
   if (!stats) {
@@ -637,20 +644,30 @@ function buildDraftPack() {
   let pens = stats.palette.filter((c) => c.kind !== 'faint').map((c) => c.hex);
   if (!pens.length) pens = (base.penColours || ['#1b2a4a']).slice();
   const scored = Assignment.styleScore(stats);
+  const pats = stats.patterns || {};
+  let jitter = base.defaultJitter;
+  if (pats.neatness != null) {
+    jitter = pats.neatness >= 0.72 ? 0.28 : (pats.neatness >= 0.5 ? 0.48 : 0.7);
+  } else if (pats.qualityGuess === 'best') {
+    jitter = 0.28;
+  }
+  const paperStyle = pats.paperStyle || stats.paperStyle || 'ruled';
   const pack = {
     id: 'pk_' + Date.now().toString(36),
     name,
     created: Date.now(),
     cellH, cellW, glyphs, missing, stats,
+    patterns: pats,
     harvestedCount: harvested.length,
     penColours: pens.slice(0, 4),
     paper: stats.paper,
+    paperStyle,
     slant: stats.slant,
     strokeWidth: stats.strokeWidth,
     lineGap: stats.lineGap || base.lineGap,
     fontFamily: glyphs.length ? null : base.fontFamily,
     headingStyle: base.headingStyle,
-    defaultJitter: base.defaultJitter,
+    defaultJitter: jitter,
     tracking: base.tracking,
     baseStyleId: base.id,
     baseStyleName: base.name,
