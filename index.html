@@ -13,12 +13,15 @@
 <meta name="theme-color" content="#2f6fed">
 <meta name="robots" content="index, follow, max-image-preview:large">
 
+<link rel="canonical" href="https://mafzalkalwardev.github.io/inkcadence/">
+
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://mafzalkalwardev.github.io/inkcadence/">
 <meta property="og:site_name" content="Inkcadence">
 <meta property="og:title" content="Inkcadence — write in your own hand">
 <meta property="og:description" content="Train on your own old assignments, then generate new pages in your own handwriting. Same ink, same slant, same letterforms. Private by design: it all runs in the browser.">
 <meta property="og:image" content="assets/inkcadence-wordmark.svg">
-<meta property="og:image:alt" content="Inkcadence wordmark — a pen nib beside the name">
+<meta property="og:image:alt" content="Inkcadence wordmark — a cadence waveform beside the name">
 
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Inkcadence — write in your own hand">
@@ -30,6 +33,7 @@
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   "name": "Inkcadence",
+  "url": "https://mafzalkalwardev.github.io/inkcadence/",
   "alternateName": "Inkcadence handwriting generator",
   "applicationCategory": "DesignApplication",
   "applicationSubCategory": "Handwriting synthesis",
@@ -42,7 +46,7 @@
     "Ink and marker colour detection",
     "Per-character letterform capture from a printable template sheet",
     "Multi-page A4 assignment rendering with ruled paper",
-    "Local accounts and style packs stored on device",
+    "Accounts and style packs stored on device, or on your own server",
     "PNG export and print-to-PDF"
   ],
   "license": "https://opensource.org/licenses/MIT",
@@ -136,20 +140,37 @@
 <!-- ============ AUTH ============ -->
 <div id="authView">
   <div class="card">
+    <svg width="62" height="62" viewBox="0 0 128 128" role="img" aria-label="Inkcadence" style="display:block;margin:0 0 10px">
+      <defs><linearGradient id="lgLogin" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#8fb6ff"/><stop offset=".48" stop-color="#2a5bd0"/><stop offset="1" stop-color="#16307a"/>
+      </linearGradient></defs>
+      <path fill="none" stroke="url(#lgLogin)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"
+            d="M14 96 C26 96 28 32 44 32 C60 32 58 104 74 104 C90 104 92 40 112 40"/>
+    </svg>
     <h1>Inkcadence</h1>
     <p class="small" style="color:#2f6fed;font-weight:700;margin:-2px 0 10px">Your hand, on every page.</p>
-    <p class="muted small">Train on your own old assignments, then generate new pages in your own hand — same slant, same pen colours, same headings. Everything stays on this device.</p>
+    <p class="muted small">Train on your own old assignments, then generate new pages in your own hand — same slant, same pen colours, same headings.</p>
     <div class="field"><label class="small">Username</label><input id="authUser" autocomplete="username" placeholder="e.g. aarav"></div>
-    <div class="field"><label class="small">Password</label><input id="authPass" type="password" autocomplete="current-password" placeholder="at least 4 characters"></div>
+    <div class="field"><label class="small">Password</label><input id="authPass" type="password" autocomplete="current-password" placeholder="at least 8 characters"></div>
     <div class="row"><button id="btnLogin" style="flex:2">Log in</button><button id="btnSignup" class="ghost" style="flex:1">Create</button></div>
     <div id="authMsg" class="msg"></div>
-    <p class="muted small" style="margin-top:16px">Local account. Data lives in this browser (IndexedDB / localStorage) and is never uploaded.</p>
+    <p class="muted small" id="storeNote" style="margin-top:16px">Local account. Data lives in this browser (IndexedDB / localStorage) and is never uploaded.</p>
   </div>
 </div>
 
 <!-- ============ APP ============ -->
 <div id="appView" hidden>
   <aside>
+    <div style="display:flex;align-items:center;gap:9px">
+      <svg width="30" height="30" viewBox="0 0 128 128" role="img" aria-label="Inkcadence">
+        <defs><linearGradient id="lgSidebar" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#dbe8ff"/><stop offset=".5" stop-color="#7aa8ff"/><stop offset="1" stop-color="#3f7bf5"/>
+        </linearGradient></defs>
+        <path fill="none" stroke="url(#lgSidebar)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"
+              d="M14 96 C26 96 28 32 44 32 C60 32 58 104 74 104 C90 104 92 40 112 40"/>
+      </svg>
+      <span style="font-weight:700;color:#fff;letter-spacing:-.2px">Inkcadence</span>
+    </div>
     <div class="who">
       <div class="avatar" id="avatar">?</div>
       <div>
@@ -301,10 +322,27 @@ that has no labels attached.</textarea>
   </main>
 </div>
 
+<script src="js/config.js"></script>
 <script src="js/store.js"></script>
 <script src="js/imaging.js"></script>
 <script src="js/glyphs.js"></script>
 <script src="js/render.js"></script>
 <script src="js/app.js"></script>
+<script>
+/* Tells the user which storage driver actually won, instead of silently guessing. */
+if (window.Store && Store.ready) {
+  Store.ready.then(function (mode) {
+    var note = document.getElementById('storeNote');
+    if (!note) return;
+    if (mode === 'remote') {
+      note.innerHTML = 'Account and style packs are stored on the Inkcadence server. ' +
+        'Your handwriting samples are analysed in this browser and only the extracted profile is uploaded.';
+    } else if (window.INKCADENCE_CONFIG && INKCADENCE_CONFIG.apiBase) {
+      note.innerHTML = 'The server at <b>' + INKCADENCE_CONFIG.apiBase + '</b> could not be reached, ' +
+        'so this is a local-only account. Data lives in this browser and is never uploaded.';
+    }
+  });
+}
+</script>
 </body>
 </html>

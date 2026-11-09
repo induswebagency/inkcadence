@@ -12,6 +12,12 @@
 
 <h1 align="center">Inkcadence</h1>
 
+<p align="center">
+  <a href="https://mafzalkalwardev.github.io/inkcadence/"><b>▶ Open the live app</b></a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/mafzalkalwardev/inkcadence">Source</a>
+</p>
+
 > **Inkcadence is an open-source, browser-based handwriting generator that learns your handwriting from your own old assignments and writes new pages in it.**
 
 Inkcadence analyses uploaded pages of your handwriting to extract ink colours, slant, stroke weight, line spacing and paper tone, then captures your individual letterforms from a printable template sheet. It stores that profile as a reusable *style pack* in a local account and renders new A4 pages — assignments, notes, letters — in your own hand, with your own pen colours and heading style.
@@ -25,9 +31,9 @@ Inkcadence analyses uploaded pages of your handwriting to extract ink colours, s
 | **Input** | Photos or scans of your own handwritten pages, plus one filled template sheet |
 | **Output** | Multi-page A4 PNG images, or print-to-PDF |
 | **Learns** | Ink and marker colours, slant, stroke weight, line spacing, paper tone, 80 letterforms |
-| **Runs on** | Any modern browser — no install, no build step, no server |
-| **Data** | 100% on-device (IndexedDB / localStorage); zero network calls at runtime |
-| **Stack** | Vanilla JavaScript, Canvas 2D, IndexedDB — no frameworks, no dependencies |
+| **Runs on** | Any modern browser — no install, no build step. An optional self-hosted backend adds accounts and sync |
+| **Data** | On-device by default (IndexedDB / localStorage). With the backend enabled, accounts and style packs live on your own server |
+| **Stack** | Vanilla JavaScript, Canvas 2D, IndexedDB. Optional backend: Node + Express + PostgreSQL |
 | **License** | MIT |
 | **Good for** | Writing in your own hand when you cannot physically write, note reconstruction, letters, personal archiving |
 
@@ -35,13 +41,13 @@ Inkcadence analyses uploaded pages of your handwriting to extract ink colours, s
 
 - **A handwriting synthesis tool.** It generates images of handwriting from typed text, matching a specific person's writing.
 - **A style extractor.** It measures slant, stroke width, line spacing, ink palette and paper colour directly from photographs of your pages.
-- **Local-first.** Every computation runs in the browser. No page, no photo and no generated output is uploaded to any server.
+- **Local-first by default.** Out of the box every computation runs in the browser and no page, photo or generated output is uploaded anywhere. If you switch on the optional backend, only the extracted style profile is sent to your own server — never the source photos.
 - **Free and open source.** MIT licensed, dependency-free vanilla JavaScript.
 
 ## What it is not
 
 - Not a document forger. It does not reproduce signatures, certificates or official documents, and it embeds an optional "written with AI assistance" mark.
-- Not a cloud service. Accounts and style packs live on the device, in IndexedDB (or localStorage).
+- Not a cloud service. Out of the box accounts and style packs live on the device, in IndexedDB (or localStorage). You can optionally run your own server instead — see `BACKEND.md`.
 
 ## Features
 
@@ -59,7 +65,7 @@ Inkcadence analyses uploaded pages of your handwriting to extract ink colours, s
 ## Quick start
 
 ```bash
-git clone <this repository>
+git clone https://github.com/mafzalkalwardev/inkcadence.git
 cd inkcadence
 ```
 
@@ -71,6 +77,35 @@ If your browser restricts local storage on `file://`, serve the folder instead:
 npx --yes serve . -l 4173
 # open http://localhost:4173
 ```
+
+## Running it with the backend
+
+The app works with no server. To run accounts and style packs on a server of your
+own, you need Node 18+ and about a minute:
+
+```bash
+npm install
+npm run dev
+# open http://localhost:8080
+```
+
+`npm run dev` starts the real server against an in-memory database, so there is
+nothing else to install. Data is lost when it stops — it is for trying the app out.
+Point `DATABASE_URL` at a real PostgreSQL server (or run `docker compose up
+--build`) when you want it to persist.
+
+To check the backend without opening a browser:
+
+```bash
+npm test
+```
+
+That runs 81 assertions against the live API and the browser storage adapter,
+using an in-memory PostgreSQL. No database server needed.
+
+Then, to put the page and the API on different origins, edit `js/config.js`.
+Full instructions, including GitHub Pages and VPS deployment, are in
+[`BACKEND.md`](BACKEND.md).
 
 ## How it works
 
@@ -89,7 +124,7 @@ js/store.js       local accounts + style-pack persistence
 js/imaging.js     ink clustering, slant, stroke, spacing, paper tone
 js/glyphs.js      sheet-grid → alpha glyphs, tint cache
 js/render.js      layout, jitter synthesis, pagination
-assets/           mark and wordmark (SVG)
+assets/           mark, light mark and wordmark (SVG)
 ```
 
 No frameworks, no bundler, no network requests at runtime.

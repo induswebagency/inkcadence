@@ -1,0 +1,14 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+node_modules
+npm-debug.log*
+test
+assets/concepts
+logo-options.html
+publish.cmd
+README.md
+BACKEND.md
+SECURITY-REPORT.md

@@ -6,3 +6,11 @@ Thumbs.db
 .vscode/
 dist/
 *.local
+
+logo-options.html
+assets/concepts/
+publish.cmd
+
+.env
+inkcadence-update.tar.gz
+_deliver.html

@@ -20,6 +20,14 @@
   ],
   "license": "MIT",
   "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mafzalkalwardev/inkcadence.git"
+  },
+  "homepage": "https://mafzalkalwardev.github.io/inkcadence/",
+  "bugs": {
+    "url": "https://github.com/mafzalkalwardev/inkcadence/issues"
+  },
   "browser": "index.html",
   "files": [
     "index.html",
@@ -28,10 +36,21 @@
     "assets/"
   ],
   "scripts": {
-    "start": "npx --yes serve . -l 4173",
-    "serve": "npx --yes serve . -l 4173"
+    "start": "node server/index.js",
+    "dev": "node server/dev.js",
+    "dev:watch": "node --watch server/dev.js",
+    "migrate": "node server/migrate.js",
+    "test": "node test/api.test.js && node test/frontend.test.js",
+    "serve:static": "npx --yes serve . -l 4173"
   },
   "engines": {
-    "node": ">=16"
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "pg": "^8.12.0"
+  },
+  "devDependencies": {
+    "pg-mem": "^3.0.14"
   }
 }

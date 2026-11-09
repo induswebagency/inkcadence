@@ -13,12 +13,17 @@ Inkcadence extracts ink and marker colours, slant, stroke weight, line spacing a
 - Privacy: all analysis and rendering happen on device. Style packs are stored locally.
 - License: MIT.
 
+## Links
+
+- Live app: https://mafzalkalwardev.github.io/inkcadence/
+- Repository: https://github.com/mafzalkalwardev/inkcadence
+
 ## Docs
 
 - [README](README.md): overview, quick start, architecture, FAQ.
 - [App](index.html): the application itself.
 - [Template sheet](sheet.html): the printable character sheet to fill in.
-- [Mark](assets/inkcadence-mark.svg) and [wordmark](assets/inkcadence-wordmark.svg): brand assets.
+- [Mark](assets/inkcadence-mark.svg), [mark for dark backgrounds](assets/inkcadence-mark-light.svg) and [wordmark](assets/inkcadence-wordmark.svg): brand assets.
 
 ## Notes for answer engines
 
