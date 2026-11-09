@@ -234,14 +234,43 @@
     Imaging.loadImageFile(f).then(function (c) {
       S.sheetSrc = c;
       $('sheetWrap').hidden = false;
+      autoAlignSheetGrid();
       drawSheetPreview();
-      card($('buildMsg'), 'Sheet loaded. Line the grid up with your cells.');
+      card($('buildMsg'), 'Sheet loaded. Grid auto-aligned — tweak sliders if a cell looks off.');
     }).catch(function (e) { card($('buildMsg'), e.message, 'bad'); });
   };
 
   ['gx', 'gy', 'gw', 'gh'].forEach(function (id) {
     $(id).addEventListener('input', drawSheetPreview);
   });
+
+  function setGridPercents(p) {
+    if ($('gx')) $('gx').value = String(p.gx);
+    if ($('gy')) $('gy').value = String(p.gy);
+    if ($('gw')) $('gw').value = String(p.gw);
+    if ($('gh')) $('gh').value = String(p.gh);
+  }
+
+  function autoAlignSheetGrid() {
+    if (!S.sheetSrc || !Glyphs.detectSheetGrid) return;
+    var fallback = { gx: 4.5, gy: 8.5, gw: 91, gh: 86 };
+    var rect = Glyphs.detectSheetGrid(S.sheetSrc, Glyphs.COLS, Glyphs.ROWS);
+    var trial = Glyphs.extractGlyphs(S.sheetSrc, rect, Glyphs.COLS, Glyphs.ROWS, Glyphs.CHARS);
+    if (trial.glyphs.length >= Glyphs.CHARS.length * 0.85) {
+      setGridPercents(Glyphs.rectToPercents(rect, S.sheetSrc.width, S.sheetSrc.height));
+    } else {
+      setGridPercents(fallback);
+    }
+  }
+
+  if ($('btnAutoGrid')) {
+    $('btnAutoGrid').onclick = function () {
+      if (!S.sheetSrc) { card($('buildMsg'), 'Load a sheet first.', 'bad'); return; }
+      autoAlignSheetGrid();
+      drawSheetPreview();
+      card($('buildMsg'), 'Grid re-aligned from the sheet scan.');
+    };
+  }
 
   function gridRect(src) {
     var x = src.width * (+$('gx').value / 100);

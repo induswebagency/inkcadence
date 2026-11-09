@@ -301,10 +301,11 @@ function trainWizardHtml() {
         <div id="sheetWrap" hidden>
           <canvas id="sheetCanvas" style="width:100%;max-width:520px;border:1px solid var(--line);border-radius:8px;background:#fff"></canvas>
           <div class="grid2" style="gap:6px;margin-top:8px">
-            <div><label class="small muted">Left %</label><input id="gx" type="range" min="0" max="60" value="6"></div>
-            <div><label class="small muted">Top %</label><input id="gy" type="range" min="0" max="70" value="14"></div>
-            <div><label class="small muted">Width %</label><input id="gw" type="range" min="30" max="100" value="88"></div>
-            <div><label class="small muted">Height %</label><input id="gh" type="range" min="20" max="90" value="72"></div>
+            <div><label class="small muted">Left %</label><input id="gx" type="range" min="0" max="60" value="4.5" step="0.5"></div>
+            <div><label class="small muted">Top %</label><input id="gy" type="range" min="0" max="70" value="8.5" step="0.5"></div>
+            <div><label class="small muted">Width %</label><input id="gw" type="range" min="30" max="100" value="91" step="0.5"></div>
+            <div><label class="small muted">Height %</label><input id="gh" type="range" min="20" max="95" value="86" step="0.5"></div>
+            <div style="grid-column:1/-1"><button type="button" class="ghost tiny" id="btnAutoGrid">Auto-align grid</button></div>
           </div>
         </div>
       </div>
@@ -490,6 +491,25 @@ function gridRect(src) {
   return { x, y, w: Math.min(w, src.width - x), h: Math.min(h, src.height - y) };
 }
 
+function setGridPercents(p) {
+  if ($('#gx')) $('#gx').value = String(p.gx);
+  if ($('#gy')) $('#gy').value = String(p.gy);
+  if ($('#gw')) $('#gw').value = String(p.gw);
+  if ($('#gh')) $('#gh').value = String(p.gh);
+}
+
+function autoAlignSheetGrid() {
+  if (!S.sheetSrc || !Glyphs.detectSheetGrid) return;
+  const fallback = { gx: 4.5, gy: 8.5, gw: 91, gh: 86 };
+  const rect = Glyphs.detectSheetGrid(S.sheetSrc, Glyphs.COLS, Glyphs.ROWS);
+  const trial = Glyphs.extractGlyphs(S.sheetSrc, rect, Glyphs.COLS, Glyphs.ROWS, Glyphs.CHARS);
+  if (trial.glyphs.length >= Glyphs.CHARS.length * 0.85) {
+    setGridPercents(Glyphs.rectToPercents(rect, S.sheetSrc.width, S.sheetSrc.height));
+  } else {
+    setGridPercents(fallback);
+  }
+}
+
 function drawSheetPreview() {
   const src = S.sheetSrc;
   const cv = $('#sheetCanvas');
@@ -625,9 +645,22 @@ function wireApp() {
   $('#fileSheet').onchange = () => {
     const f = ($('#fileSheet').files || [])[0];
     if (!f) return;
-    Imaging.loadImageFile(f).then((c) => { S.sheetSrc = c; drawSheetPreview(); }).catch((e) => card($('#buildMsg'), e.message, 'bad'));
+    Imaging.loadImageFile(f).then((c) => {
+      S.sheetSrc = c;
+      autoAlignSheetGrid();
+      drawSheetPreview();
+      card($('#buildMsg'), 'Sheet loaded. Grid auto-aligned — tweak if needed.');
+    }).catch((e) => card($('#buildMsg'), e.message, 'bad'));
   };
   ['gx', 'gy', 'gw', 'gh'].forEach((id) => $(id).addEventListener('input', drawSheetPreview));
+  if ($('#btnAutoGrid')) {
+    $('#btnAutoGrid').onclick = () => {
+      if (!S.sheetSrc) { card($('#buildMsg'), 'Load a sheet first.', 'bad'); return; }
+      autoAlignSheetGrid();
+      drawSheetPreview();
+      card($('#buildMsg'), 'Grid re-aligned from the sheet scan.');
+    };
+  }
 
   $('#wizNext1').onclick = () => setWizard(2);
   $('#wizBack2').onclick = () => setWizard(1);

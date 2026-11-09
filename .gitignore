@@ -17,3 +17,4 @@ publish.cmd
 .env
 inkcadence-update.tar.gz
 _deliver.html
+test/fixtures/out/

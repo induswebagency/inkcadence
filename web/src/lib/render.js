@@ -1,6 +1,5 @@
-'use strict';
-import { Glyphs } from './glyphs.js';
 /* render.js — lays text out and paints it in the trained hand. */
+'use strict';
 var PAGE_W = 1240, PAGE_H = 1754;   /* A4 @ 150 dpi */
 
   function makeRng(seed) {
@@ -51,7 +50,7 @@ var PAGE_W = 1240, PAGE_H = 1754;   /* A4 @ 150 dpi */
 
   function buildMetrics(pack, size, tracking) {
     var scale = (size * 1.12) / (pack.cellH || 92);
-    var groups = pack.glyphs && pack.glyphs.length ? Glyphs.groupByChar(pack.glyphs) : null;
+    var groups = pack.glyphs && pack.glyphs.length ? global.Glyphs.groupByChar(pack.glyphs) : null;
     var avg = Object.create(null);
 
     if (groups) {
@@ -111,12 +110,10 @@ var PAGE_W = 1240, PAGE_H = 1754;   /* A4 @ 150 dpi */
     return list[(r() * list.length) | 0];
   }
 
-  // Sample-derived pairwise kerning: tighten common joins slightly.
   var KERN = { th: -0.12, he: -0.08, in: -0.06, er: -0.1, an: -0.07, re: -0.08, on: -0.06, at: -0.05, en: -0.07, es: -0.05, of: -0.08, to: -0.06 };
   var LIGATURES = { fi: true, fl: true, ff: true, tt: true, ll: true };
 
   function glyphJitterProfile(ch) {
-    // Ascenders / descenders get slightly different noise profiles.
     if ('bdfhklt'.indexOf(ch) >= 0) return { rot: 0.7, dy: 0.85, dx: 1.0 };
     if ('gjpqy'.indexOf(ch) >= 0) return { rot: 0.85, dy: 1.15, dx: 0.9 };
     if ('iw'.indexOf(ch) >= 0) return { rot: 1.1, dy: 1.0, dx: 1.2 };
@@ -142,7 +139,21 @@ var PAGE_W = 1240, PAGE_H = 1754;   /* A4 @ 150 dpi */
       if (ch === ' ') { x += size * 0.34 * (0.75 + r() * 0.7); prev = ''; continue; }
 
       var list = m.groups[ch];
-      if (!list) { x += size * 0.5; prev = ch; continue; }
+      if (!list) {
+        /* Missing glyph: draw a light cursive fallback so words stay readable. */
+        ctx.save();
+        ctx.font = (size * 0.95) + 'px "Segoe Script", "Ink Free", cursive';
+        ctx.fillStyle = colour;
+        ctx.globalAlpha = 0.78 + r() * 0.15;
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillText(ch, x, baseline + gauss(r) * jitter * size * 0.04);
+        var missAdv = ctx.measureText(ch).width || size * 0.5;
+        ctx.restore();
+        ctx.globalAlpha = 1;
+        x += missAdv * (0.92 + r() * 0.12);
+        prev = ch;
+        continue;
+      }
 
       x += pairKern(prev, ch, size);
 
@@ -153,7 +164,6 @@ var PAGE_W = 1240, PAGE_H = 1754;   /* A4 @ 150 dpi */
       var dy = drift + gauss(r) * jitter * size * 0.07 * jp.dy;
       var dx = gauss(r) * jitter * size * 0.03 * jp.dx;
       var shear = 0.10 + gauss(r) * jitter * 0.05;
-      // Ligature-ish join: pull glyphs slightly closer and raise join alpha.
       var lig = LIGATURES[prev + ch];
       if (lig) { dx -= size * 0.04; shear += 0.02; }
 
@@ -162,7 +172,7 @@ var PAGE_W = 1240, PAGE_H = 1754;   /* A4 @ 150 dpi */
       ctx.rotate(rot);
       ctx.transform(1, 0, shear, 1, 0, 0);
       ctx.globalAlpha = (lig ? 0.9 : 0.82) + r() * 0.18;
-      ctx.drawImage(Glyphs.tint(g, colour), 0, -g.by * sc, g.w * sc, g.h * sc);
+      ctx.drawImage(global.Glyphs.tint(g, colour), 0, -g.by * sc, g.w * sc, g.h * sc);
       ctx.restore();
       ctx.globalAlpha = 1;
 
@@ -296,7 +306,6 @@ var PAGE_W = 1240, PAGE_H = 1754;   /* A4 @ 150 dpi */
     ctx.textAlign = 'left';
   }
 
-  /** Multi-page print/PDF helper — opens a print document the browser can save as PDF. */
   function exportPrintDocument(pages, title) {
     var imgs = pages.map(function (c) {
       return '<img src="' + c.toDataURL('image/jpeg', 0.92) + '">';

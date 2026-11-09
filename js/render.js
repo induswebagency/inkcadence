@@ -141,7 +141,21 @@
       if (ch === ' ') { x += size * 0.34 * (0.75 + r() * 0.7); prev = ''; continue; }
 
       var list = m.groups[ch];
-      if (!list) { x += size * 0.5; prev = ch; continue; }
+      if (!list) {
+        /* Missing glyph: draw a light cursive fallback so words stay readable. */
+        ctx.save();
+        ctx.font = (size * 0.95) + 'px "Segoe Script", "Ink Free", cursive';
+        ctx.fillStyle = colour;
+        ctx.globalAlpha = 0.78 + r() * 0.15;
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillText(ch, x, baseline + gauss(r) * jitter * size * 0.04);
+        var missAdv = ctx.measureText(ch).width || size * 0.5;
+        ctx.restore();
+        ctx.globalAlpha = 1;
+        x += missAdv * (0.92 + r() * 0.12);
+        prev = ch;
+        continue;
+      }
 
       x += pairKern(prev, ch, size);
 

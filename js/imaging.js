@@ -69,6 +69,23 @@
     return ink;
   }
 
+  /* Colour-aware ink: dark enough, not bright highlighter streaks. */
+  function inkMaskRGBA(data, w, h, th) {
+    var ink = new Uint8Array(w * h);
+    for (var i = 0, p = 0; i < data.length; i += 4, p++) {
+      var r = data[i], g = data[i + 1], b = data[i + 2];
+      var lum = 0.299 * r + 0.587 * g + 0.114 * b;
+      if (lum >= th) { ink[p] = 0; continue; }
+      var mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+      var sat = mx ? (mx - mn) / mx : 0;
+      /* Drop fluorescent highlighter / marker washes (bright + saturated). */
+      if (lum > 140 && sat > 0.28) { ink[p] = 0; continue; }
+      if (lum > 165) { ink[p] = 0; continue; }
+      ink[p] = 1;
+    }
+    return ink;
+  }
+
   function estimateSlant(ink, w, h) {
     var xs = [], ys = [];
     for (var y = 0; y < h; y += 2) {
@@ -255,14 +272,23 @@
 
   function analyze(srcCanvas) {
     var g = toGrayscale(srcCanvas, 1400);
-    var th = otsu(g.hist);
-    var ink = inkMask(g.gray, g.w, g.h, th);
+    var th = Math.min(otsu(g.hist), 175);
+    var ink = inkMaskRGBA(g.data, g.w, g.h, th);
     var slant = estimateSlant(ink, g.w, g.h);
+    /* Extreme slant is almost always a polluted mask — clamp for style packs. */
+    if (Math.abs(slant) > 0.35) slant = Math.max(-0.35, Math.min(0.35, slant * 0.4));
     var deskewed = deskewGray(g.gray, g.w, g.h, slant);
+    /* Rebuild RGBA-scale mask on the original colour field (deskew only for lines/stroke). */
     var ink2 = inkMask(deskewed.gray, deskewed.w, deskewed.h, th);
-
-    var inkCount = 0;
-    for (var i = 0; i < ink2.length; i++) inkCount += ink2[i];
+    /* Prefer colour-aware mask for ratio / palette-adjacent stats when it looks sane. */
+    var inkCount = 0, i;
+    for (i = 0; i < ink.length; i++) inkCount += ink[i];
+    var ratio = inkCount / ink.length;
+    if (ratio < 0.002 || ratio > 0.22) {
+      inkCount = 0;
+      for (i = 0; i < ink2.length; i++) inkCount += ink2[i];
+      ratio = inkCount / ink2.length;
+    }
 
     var lines = estimateLines(ink2, deskewed.w, deskewed.h);
     var palette = clusterColors(g.data, g.w, g.h);
@@ -275,7 +301,7 @@
       width: srcCanvas.width,
       height: srcCanvas.height,
       threshold: th,
-      inkRatio: +(inkCount / ink2.length).toFixed(4),
+      inkRatio: +ratio.toFixed(4),
       slant: +slant.toFixed(3),
       strokeWidth: strokeWidth,
       strokeConfidence: +strokeConfidence(ink2, deskewed.w, deskewed.h, strokeWidth).toFixed(3),
@@ -336,6 +362,7 @@
     toGrayscale: toGrayscale,
     otsu: otsu,
     deskewGray: deskewGray,
-    strokeConfidence: strokeConfidence
+    strokeConfidence: strokeConfidence,
+    inkMaskRGBA: inkMaskRGBA
   };
 })(window);
