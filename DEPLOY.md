@@ -25,6 +25,6 @@
 - [ ] Error tracking / OTEL endpoint
 - [ ] Admin user listed in `ADMIN_USERS`
 
-## Static Pages fallback
+## GitHub Pages
 
-GitHub Pages can still serve root `index.html` + `js/` classical app with `apiBase` pointed at your API (token mode).
+`.github/workflows/pages.yml` publishes `docs/` (landing page, FAQ, screenshots) and the Vite build at `/app/`. The repo-root `index.html` + `js/` classical app still runs if you serve the repository root yourself and point `apiBase` at your API.

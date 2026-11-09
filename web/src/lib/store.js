@@ -278,7 +278,16 @@ var NS = 'inkcadence';
     return get('packs:' + user).then(function (p) { return p || []; });
   }
 
+  function plainPack(pack) {
+    return JSON.parse(JSON.stringify(pack, function (key, value) {
+      if (key === '_img' || key === '__id') return undefined;
+      if (typeof value === 'function') return undefined;
+      return value;
+    }));
+  }
+
   function savePack(user, pack) {
+    pack = plainPack(pack);
     if (MODE === 'remote') {
       var token = getToken();
       var payload = { name: pack.name || 'Untitled', data: pack };

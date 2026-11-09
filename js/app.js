@@ -2,6 +2,33 @@
 (function () {
   'use strict';
 
+  var THEME_KEY = 'inkcadence-theme';
+  function paintThemeToggles(theme) {
+    var buttons = document.querySelectorAll('[data-theme-toggle]');
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].textContent = theme === 'dark' ? 'Light theme' : 'Dark theme';
+      buttons[i].setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
+    }
+  }
+  function applyTheme(theme, persist) {
+    document.documentElement.setAttribute('data-theme', theme);
+    if (persist) {
+      try { localStorage.setItem(THEME_KEY, theme); } catch (e) {}
+    }
+    paintThemeToggles(theme);
+  }
+  (function initTheme() {
+    var saved = null;
+    try { saved = localStorage.getItem(THEME_KEY); } catch (e) {}
+    var theme = saved || (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    applyTheme(theme, false);
+  })();
+  document.addEventListener('click', function (e) {
+    var t = e.target && e.target.closest ? e.target.closest('[data-theme-toggle]') : null;
+    if (!t) return;
+    applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark', true);
+  });
+
   function $(id) { return document.getElementById(id); }
 
   var S = {

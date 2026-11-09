@@ -45,6 +45,10 @@
   filter: saturate(1.05);
   z-index: 0;
 }
+html[data-theme="dark"] .hero::after {
+  opacity: 0.4;
+  filter: saturate(0.85) brightness(0.42);
+}
 .hero-inner {
   position: relative;
   z-index: 1;
@@ -268,10 +272,10 @@
 .tabs button:hover { transform: none; }
 
 .drop {
-  border: 1.5px dashed #c3cedd;
+  border: 1.5px dashed var(--drop-line);
   border-radius: 12px;
   padding: 14px;
-  background: rgba(255, 253, 248, 0.7);
+  background: var(--drop-bg);
 }
 .thumbs { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 .thumbs img, .thumbs canvas {
@@ -292,7 +296,7 @@
   margin: 12px 0;
 }
 .stat {
-  background: rgba(246, 248, 252, 0.9);
+  background: var(--stat-bg);
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 9px 11px;
@@ -307,7 +311,7 @@
   margin-top: 8px;
 }
 .glyphgrid figure {
-  margin: 0; background: #fff; border: 1px solid var(--line);
+  margin: 0; background: var(--glyph-bg); border: 1px solid var(--line);
   border-radius: 7px; padding: 4px; text-align: center;
 }
 .glyphgrid img { max-width: 100%; height: 30px; object-fit: contain; display: block; margin: 0 auto; }
@@ -330,16 +334,16 @@ canvas.page {
 .wizard-steps .step {
   padding: 6px 12px;
   border-radius: 999px;
-  background: #ece7dc;
+  background: var(--step-bg);
   color: var(--muted);
   font-size: 12.5px;
   font-weight: 700;
 }
 .wizard-steps .step.on { background: var(--accent); color: #fff; }
-.wizard-steps .step.done { background: #d7ebdf; color: var(--ok); }
+.wizard-steps .step.done { background: var(--step-done-bg); color: var(--ok); }
 
 .meter {
-  height: 10px; border-radius: 999px; background: #e6e0d4; overflow: hidden; margin: 8px 0 4px;
+  height: 10px; border-radius: 999px; background: var(--meter-bg); overflow: hidden; margin: 8px 0 4px;
 }
 .meter > span {
   display: block; height: 100%; background: linear-gradient(90deg, var(--accent), #5b8fff);

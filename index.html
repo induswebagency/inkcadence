@@ -3,6 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+  (function () {
+    try {
+      var saved = localStorage.getItem('inkcadence-theme');
+      var theme = saved || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+    } catch (e) {}
+  })();
+</script>
 <link rel="icon" type="image/svg+xml" href="assets/inkcadence-mark.svg">
 <link rel="apple-touch-icon" href="assets/inkcadence-mark.svg">
 <title>Inkcadence — write in your own hand</title>
@@ -234,6 +243,30 @@
 
   #sheetWrap{position:relative;margin-top:12px;max-width:520px}
   #sheetCanvas{width:100%;height:auto;border:1px solid var(--line);border-radius:8px;background:#fff}
+
+  html[data-theme="dark"]{
+    --ink:#e7eef8; --muted:#93a3b8; --line:#2c3e58; --bg:#0c141e;
+    --card:#121c2c; --accent:#9ec0ff; --accent2:#1a3058; --ok:#3dcc8e; --bad:#ff8d8d;
+    color-scheme:dark;
+  }
+  html[data-theme="dark"] body,
+  html[data-theme="dark"] #authView{
+    background:radial-gradient(900px 500px at 15% 0%,rgba(47,111,237,.22),transparent),var(--bg);
+  }
+  html[data-theme="dark"] button{background:#2f6fed;color:#fff}
+  html[data-theme="dark"] button.ghost,
+  html[data-theme="dark"] .sidebar-actions .btn-logout{background:#1a3058;color:#d5e4ff}
+  html[data-theme="dark"] input,
+  html[data-theme="dark"] select,
+  html[data-theme="dark"] textarea{background:#152232;color:var(--ink);border-color:var(--line)}
+  html[data-theme="dark"] .field label{color:#c5d2e4}
+  html[data-theme="dark"] .drop{background:#101a28;border-color:#3a5270}
+  html[data-theme="dark"] .stat{background:#101a28}
+  html[data-theme="dark"] .glyphgrid figure{background:#0e1826}
+  html[data-theme="dark"] .hint{background:#172848;border-color:#2d4d86;color:#d5e4ff}
+  html[data-theme="dark"] .err{background:#3a1e24;border-color:#6e3038;color:#ffc9c9}
+  html[data-theme="dark"] .tabs button.on{background:var(--accent2);color:#d5e4ff}
+  html[data-theme="dark"] .swatch button.on{border-color:#e7eef8}
 </style>
 </head>
 <body>
@@ -254,6 +287,7 @@
     <div class="field"><label class="small">Username</label><input id="authUser" autocomplete="username" placeholder="e.g. aarav"></div>
     <div class="field"><label class="small">Password</label><input id="authPass" type="password" autocomplete="current-password" placeholder="at least 8 characters"></div>
     <div class="row"><button id="btnLogin" style="flex:2">Log in</button><button id="btnSignup" class="ghost" style="flex:1">Create</button></div>
+    <div class="row" style="margin-top:8px"><button type="button" class="ghost tiny" data-theme-toggle>Dark theme</button></div>
     <div id="authMsg" class="msg"></div>
     <p class="muted small" id="storeNote" style="margin-top:16px">Local account. Data lives in this browser (IndexedDB / localStorage) and is never uploaded.</p>
   </div>
@@ -291,6 +325,7 @@
     </div>
     <div class="sidebar-actions">
       <button class="btn-new" id="btnNewPack">＋ New style pack</button>
+      <button type="button" class="btn-logout" data-theme-toggle>Dark theme</button>
       <button class="btn-logout" id="btnLogout">Log out</button>
     </div>
   </aside>

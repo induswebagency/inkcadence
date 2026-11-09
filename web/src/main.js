@@ -29,6 +29,46 @@ function $(sel, el = document) {
 function esc(s) {
   return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 }
+const THEME_KEY = 'inkcadence-theme';
+
+function readTheme() {
+  return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+}
+
+function applyTheme(theme, persist) {
+  document.documentElement.setAttribute('data-theme', theme);
+  if (persist) {
+    try { localStorage.setItem(THEME_KEY, theme); } catch { /* private mode */ }
+  }
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', theme === 'dark' ? '#0c141e' : '#f3efe6');
+}
+
+function initTheme() {
+  let saved = null;
+  try { saved = localStorage.getItem(THEME_KEY); } catch { /* private mode */ }
+  const theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  applyTheme(theme, false);
+}
+
+function themeToggleHtml(extraClass = 'ghost tiny') {
+  const dark = readTheme() === 'dark';
+  return `<button type="button" class="${extraClass} theme-toggle" id="themeToggle" aria-pressed="${dark}" aria-label="Switch color theme">${dark ? 'Light theme' : 'Dark theme'}</button>`;
+}
+
+function wireThemeToggle() {
+  const btn = $('#themeToggle');
+  if (!btn) return;
+  btn.onclick = () => {
+    const next = readTheme() === 'dark' ? 'light' : 'dark';
+    applyTheme(next, true);
+    btn.textContent = next === 'dark' ? 'Light theme' : 'Dark theme';
+    btn.setAttribute('aria-pressed', String(next === 'dark'));
+  };
+}
+
+initTheme();
+
 function brandSvg(id) {
   return `<svg width="36" height="36" viewBox="0 0 128 128" aria-hidden="true">
     <defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="0">
@@ -62,6 +102,7 @@ function renderMarketing() {
       <a class="brand-mark" href="#/">${brandSvg('lgNav')}<strong>Inkcadence</strong></a>
       <div class="row">
         <a class="small muted" href="#/pricing">Pricing</a>
+        ${themeToggleHtml()}
         <button class="ghost tiny" id="navLogin">Log in</button>
         <button class="tiny" id="navStart">Open app</button>
       </div>
@@ -86,6 +127,7 @@ function renderMarketing() {
   $('#navStart').onclick = () => goAppOrAuth();
   $('#ctaStart').onclick = () => goAppOrAuth();
   $('#ctaSelfhost').onclick = () => { window.open('/SELFHOST.md', '_blank'); };
+  wireThemeToggle();
 }
 
 function renderPricing() {
@@ -93,7 +135,7 @@ function renderPricing() {
   <div class="marketing">
     <nav class="marketing-nav">
       <a class="brand-mark" href="#/">${brandSvg('lgPrice')}<strong>Inkcadence</strong></a>
-      <button class="tiny" id="back">Back</button>
+      <div class="row">${themeToggleHtml()}<button class="tiny" id="back">Back</button></div>
     </nav>
     <section class="hero">
       <div class="hero-inner rise">
@@ -109,6 +151,7 @@ function renderPricing() {
   $('#back').onclick = () => navigate('/');
   $('#toDocs').onclick = () => window.open('/SELFHOST.md', '_blank');
   $('#toApp').onclick = () => goAppOrAuth();
+  wireThemeToggle();
 }
 
 function renderLegal() {
@@ -116,6 +159,7 @@ function renderLegal() {
   <div class="marketing">
     <nav class="marketing-nav">
       <a class="brand-mark" href="#/">${brandSvg('lgLegal')}<strong>Inkcadence</strong></a>
+      ${themeToggleHtml()}
     </nav>
     <article class="legal panel rise">
       <h1>Privacy &amp; terms</h1>
@@ -124,6 +168,7 @@ function renderLegal() {
       <p class="muted small">MIT licensed. SaaS deployments may process account email for verification, billing, and support.</p>
     </article>
   </div>`;
+  wireThemeToggle();
 }
 
 /* ---------------- auth ---------------- */
@@ -142,9 +187,11 @@ function renderAuth() {
       <div id="authMsg" class="msg"></div>
       <p class="muted small" id="storeNote" style="margin-top:16px"></p>
       <p class="small" style="margin-top:12px"><a href="#/">← Back to home</a></p>
+      <div class="row" style="margin-top:10px">${themeToggleHtml()}</div>
     </div>
   </div>`;
   wireAuth();
+  wireThemeToggle();
   Store.ready.then((mode) => {
     const note = $('#storeNote');
     if (!note) return;
@@ -266,6 +313,7 @@ async function renderApp() {
       <div class="sidebar-actions">
         <button class="btn-new" id="btnNewPack">＋ New style pack</button>
         <button class="btn-ghost" id="btnHome">Marketing</button>
+        ${themeToggleHtml('btn-ghost')}
         <button class="btn-ghost" id="btnLogout">Log out</button>
       </div>
     </aside>
@@ -279,6 +327,7 @@ async function renderApp() {
     </main>
   </div>`;
   wireApp();
+  wireThemeToggle();
   renderPackList();
   renderPackSelect();
 }
@@ -308,7 +357,7 @@ function trainWizardHtml() {
     <div id="wiz2" hidden>
       <div class="drop">
         <h4>Template sheet</h4>
-        <p class="small muted">Print, fill every character, photograph flat. <a href="/sheet.html" target="_blank">Open printable sheet ↗</a></p>
+        <p class="small muted">Print, fill every character, photograph flat. <a href="${import.meta.env.BASE_URL}sheet.html" target="_blank">Open printable sheet ↗</a></p>
         <input type="file" id="fileSheet" accept="image/*" hidden>
         <button class="ghost tiny" id="btnPickSheet">Upload filled sheet</button>
         <div id="sheetWrap" hidden>
@@ -668,7 +717,7 @@ function wireApp() {
       card($('#buildMsg'), 'Sheet loaded. Grid auto-aligned — tweak if needed.');
     }).catch((e) => card($('#buildMsg'), e.message, 'bad'));
   };
-  ['gx', 'gy', 'gw', 'gh'].forEach((id) => $(id).addEventListener('input', drawSheetPreview));
+  ['gx', 'gy', 'gw', 'gh'].forEach((id) => $('#' + id).addEventListener('input', drawSheetPreview));
   if ($('#btnAutoGrid')) {
     $('#btnAutoGrid').onclick = () => {
       if (!S.sheetSrc) { card($('#buildMsg'), 'Load a sheet first.', 'bad'); return; }

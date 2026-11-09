@@ -3,8 +3,19 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" type="image/svg+xml" href="/assets/inkcadence-mark.svg">
+  <link rel="icon" type="image/svg+xml" href="%BASE_URL%assets/inkcadence-mark.svg">
   <title>Inkcadence — write in your own hand</title>
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('inkcadence-theme');
+        var theme = saved || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', theme === 'dark' ? '#0c141e' : '#f3efe6');
+      } catch (e) {}
+    })();
+  </script>
   <meta name="description" content="Inkcadence learns your handwriting from your own pages and writes new ones in it — classical glyph synthesis with optional neural personalization. Self-host or SaaS.">
   <meta name="theme-color" content="#2f6fed">
   <link rel="canonical" href="https://mafzalkalwardev.github.io/inkcadence/">

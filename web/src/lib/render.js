@@ -1,5 +1,6 @@
 /* render.js — lays text out and paints it in the trained hand. */
 'use strict';
+import { Glyphs } from './glyphs.js';
 var PAGE_W = 1240, PAGE_H = 1754;   /* A4 @ 150 dpi */
 
   function makeRng(seed) {
@@ -50,7 +51,7 @@ var PAGE_W = 1240, PAGE_H = 1754;   /* A4 @ 150 dpi */
 
   function buildMetrics(pack, size, tracking) {
     var scale = (size * 1.12) / (pack.cellH || 92);
-    var groups = pack.glyphs && pack.glyphs.length ? global.Glyphs.groupByChar(pack.glyphs) : null;
+    var groups = pack.glyphs && pack.glyphs.length ? Glyphs.groupByChar(pack.glyphs) : null;
     var avg = Object.create(null);
 
     if (groups) {
@@ -177,7 +178,7 @@ var PAGE_W = 1240, PAGE_H = 1754;   /* A4 @ 150 dpi */
       ctx.rotate(rot);
       ctx.transform(1, 0, shear, 1, 0, 0);
       ctx.globalAlpha = (lig ? 0.9 : 0.82) + r() * 0.18;
-      ctx.drawImage(global.Glyphs.tint(g, colour), 0, -g.by * sc, g.w * sc, g.h * sc);
+      ctx.drawImage(Glyphs.tint(g, colour), 0, -g.by * sc, g.w * sc, g.h * sc);
       ctx.restore();
       ctx.globalAlpha = 1;
 
