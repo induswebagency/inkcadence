@@ -102,10 +102,16 @@ const sb = fakeDom();
 loadIife('js/imaging.js', sb);
 loadIife('js/glyphs.js', sb);
 loadIife('js/render.js', sb);
+loadIife('js/harvest.js', sb);
+loadIife('js/assignment.js', sb);
 
 check('Imaging exported', !!sb.Imaging && typeof sb.Imaging.otsu === 'function');
 check('Glyphs exported', !!sb.Glyphs && sb.Glyphs.CHARS.length > 50);
 check('Rendering exported', !!sb.Rendering && typeof sb.Rendering.renderPages === 'function');
+check('Harvest exported', !!sb.Harvest && typeof sb.Harvest.harvestFromPages === 'function');
+check('Assignment exported', !!sb.Assignment && typeof sb.Assignment.styleScore === 'function');
+check('Harvest.medianCellMetrics', typeof sb.Harvest.medianCellMetrics === 'function');
+check('Imaging.guessPaperStyle', typeof sb.Imaging.guessPaperStyle === 'function');
 
 const hist = new Uint32Array(256);
 for (let i = 0; i < 100; i++) hist[40]++;
@@ -149,6 +155,29 @@ const total = sb.Glyphs.CHARS.length;
 const completeness = Math.round((10 / total) * 100);
 check('glyph alphabet size stable', total >= 80, String(total));
 check('completeness math', completeness > 0 && completeness < 100);
+
+const layouts = sb.Assignment.layouts();
+check('assignment layouts include exam/essay/lab',
+  layouts.some((l) => l.id === 'exam_lined') &&
+  layouts.some((l) => l.id === 'blank_essay') &&
+  layouts.some((l) => l.id === 'lab_grid'));
+
+const med = sb.Harvest.medianCellMetrics([
+  { cellH: 40, cellW: 30 },
+  { cellH: 50, cellW: 32 },
+  { cellH: 90, cellW: 60 },
+]);
+check('medianCellMetrics picks middle', med.cellH === 50 && med.cellW === 32, JSON.stringify(med));
+
+const mergedEmpty = sb.Harvest.mergeVariants(
+  [{ ch: 'a', w: 1 }],
+  [{ ch: 'a', w: 2 }, { ch: 'b', w: 3 }]
+);
+check('mergeVariants adds new letters',
+  mergedEmpty.some((g) => g.ch === 'b') &&
+  mergedEmpty.filter((g) => g.ch === 'a').length === 2 &&
+  mergedEmpty.length === 3,
+  'len=' + mergedEmpty.length);
 
 console.log('\n' + '='.repeat(52));
 console.log('  passed: ' + pass + '   failed: ' + failures.length);

@@ -1,5 +1,6 @@
 /* harvest.js — pull letter-like ink crops from full assignment pages.
-   Used when no alphabet sheet is provided (or to enrich sheet glyphs with variants). */
+   Used when no alphabet sheet is provided (or to enrich sheet glyphs with variants).
+   Hardened against ruled/grid lines, highlighter, blue/green ink, and phone skew. */
 (function (global) {
   'use strict';
 
@@ -11,6 +12,7 @@
     return c;
   }
 
+  /* Colour-aware ink: keep dark pens (incl. blue/green), drop rule lines + highlighter. */
   function inkMask(src, maxW) {
     var scale = Math.min(1, (maxW || 900) / src.width);
     var w = Math.max(32, Math.round(src.width * scale));
@@ -26,15 +28,68 @@
       lum[p] = L;
       hist[L | 0]++;
     }
-    var paper = 200, acc = 0, target = n * 0.015;
+    /* Paper from bright tail — ignore dark desk/shadow corners. */
+    var paper = 200, acc = 0, target = n * 0.02;
     for (i = 255; i >= 0; i--) {
       acc += hist[i];
       if (acc >= target) { paper = i; break; }
     }
+    var cut = paper - 48;
     var mask = new Uint8Array(n);
-    var cut = paper - 42;
-    for (p = 0; p < n; p++) mask[p] = lum[p] < cut ? 1 : 0;
+    for (p = 0, i = 0; p < n; p++, i += 4) {
+      var r = d[i], g = d[i + 1], b = d[i + 2];
+      var L2 = lum[p];
+      if (L2 >= cut) { mask[p] = 0; continue; }
+      var mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+      var sat = mx ? (mx - mn) / mx : 0;
+      /* Fluorescent highlighter wash */
+      if (L2 > 135 && sat > 0.28) { mask[p] = 0; continue; }
+      /* Pale ruled / grid print (light blue-grey, not dark enough to be pen) */
+      if (L2 > 155 && b >= r - 5 && b >= g - 5 && sat < 0.35) { mask[p] = 0; continue; }
+      /* Soft shadow: darkish but very low saturation and large neighbourhood — handled later;
+         here reject only the lightest shadow fringe. */
+      if (L2 > 145 && sat < 0.08) { mask[p] = 0; continue; }
+      mask[p] = 1;
+    }
+    suppressRuledRows(mask, w, h);
     return { mask: mask, lum: lum, w: w, h: h, scale: scale, paper: paper, canvas: c };
+  }
+
+  /* Zero out rows that look like continuous ruled lines (high fill, thin). */
+  function suppressRuledRows(mask, w, h) {
+    var y, x, fill, runs, run, maxRun;
+    for (y = 0; y < h; y++) {
+      fill = 0; runs = 0; run = 0; maxRun = 0;
+      for (x = 0; x < w; x++) {
+        if (mask[y * w + x]) {
+          fill++;
+          run++;
+          if (run > maxRun) maxRun = run;
+        } else if (run) {
+          runs++;
+          run = 0;
+        }
+      }
+      if (run) runs++;
+      /* A printed rule spans most of the page as one long run. */
+      if (fill > w * 0.42 && maxRun > w * 0.28 && runs <= 6) {
+        for (x = 0; x < w; x++) mask[y * w + x] = 0;
+        /* Also clear immediate neighbours (rule thickness). */
+        if (y > 0) for (x = 0; x < w; x++) if (mask[(y - 1) * w + x]) {
+          /* only clear if that row is also sparse vertically — keep real ink */
+        }
+        if (y + 1 < h) {
+          var fill2 = 0;
+          for (x = 0; x < w; x++) if (mask[(y + 1) * w + x]) fill2++;
+          if (fill2 > w * 0.35) for (x = 0; x < w; x++) mask[(y + 1) * w + x] = 0;
+        }
+        if (y > 0) {
+          var fill0 = 0;
+          for (x = 0; x < w; x++) if (mask[(y - 1) * w + x]) fill0++;
+          if (fill0 > w * 0.35) for (x = 0; x < w; x++) mask[(y - 1) * w + x] = 0;
+        }
+      }
+    }
   }
 
   function components(mask, w, h) {
@@ -70,14 +125,27 @@
           }
         }
         var bw = maxX - minX + 1, bh = maxY - minY + 1;
-        if (count < 28 || bw < 4 || bh < 8) continue;
-        if (bw > w * 0.45 || bh > h * 0.28) continue;
+        if (count < 22 || bw < 3 || bh < 7) continue;
+        if (bw > w * 0.42 || bh > h * 0.22) continue;
         var aspect = bw / bh;
-        if (aspect > 2.8 || aspect < 0.12) continue;
-        comps.push({ minX: minX, minY: minY, maxX: maxX, maxY: maxY, w: bw, h: bh, count: count });
+        if (aspect > 2.6 || aspect < 0.1) continue;
+        /* Reject leftover horizontal rule fragments */
+        if (aspect > 2.0 && bh <= 5) continue;
+        var density = count / (bw * bh);
+        if (density < 0.12 || density > 0.92) continue;
+        /* Margin margin-line / hole-punch noise near edges */
+        if (minX < 4 && bw < 10) continue;
+        comps.push({
+          minX: minX, minY: minY, maxX: maxX, maxY: maxY,
+          w: bw, h: bh, count: count, density: density
+        });
       }
     }
-    comps.sort(function (a, b) { return b.count - a.count; });
+    comps.sort(function (a, b) {
+      var sa = a.count * (0.5 + a.density);
+      var sb = b.count * (0.5 + b.density);
+      return sb - sa;
+    });
     return comps;
   }
 
@@ -98,7 +166,7 @@
         var op = (yy * gw + xx) * 4;
         var a = 0;
         if (srcInfo.mask[sp]) {
-          a = Math.max(40, Math.min(255, (paper - srcInfo.lum[sp]) * 2.2));
+          a = Math.max(40, Math.min(255, (paper - srcInfo.lum[sp]) * 2.4));
         }
         od.data[op] = 255;
         od.data[op + 1] = 255;
@@ -107,6 +175,7 @@
       }
     }
     octx.putImageData(od, 0, 0);
+    var conf = Math.min(0.95, 0.32 + box.count / 380 + (box.density || 0) * 0.15);
     return {
       url: out.toDataURL('image/png'),
       w: gw,
@@ -117,7 +186,7 @@
       cellH: Math.round(gh * 1.15),
       cellW: Math.round(gw * 1.2),
       harvested: true,
-      confidence: Math.min(0.95, 0.35 + box.count / 400)
+      confidence: conf
     };
   }
 
@@ -137,6 +206,17 @@
     return glyphs;
   }
 
+  /* Median cell metrics from harvested crops (for packs without a sheet). */
+  function medianCellMetrics(crops) {
+    if (!crops || !crops.length) return null;
+    var hs = crops.map(function (g) { return g.cellH || g.h; }).sort(function (a, b) { return a - b; });
+    var ws = crops.map(function (g) { return g.cellW || g.w; }).sort(function (a, b) { return a - b; });
+    return {
+      cellH: hs[(hs.length * 0.5) | 0],
+      cellW: ws[(ws.length * 0.5) | 0]
+    };
+  }
+
   /* Harvest letter crops from one or more assignment canvases. */
   function harvestFromPages(canvases, opts) {
     opts = opts || {};
@@ -146,7 +226,7 @@
     (canvases || []).forEach(function (src) {
       if (!src) return;
       var info = inkMask(src, opts.maxW || 900);
-      var comps = components(info.mask, info.w, info.h).slice(0, 80);
+      var comps = components(info.mask, info.w, info.h).slice(0, 90);
       comps.forEach(function (box) {
         all.push(cropToGlyph(info, box));
       });
@@ -174,6 +254,9 @@
   global.Harvest = {
     harvestFromPages: harvestFromPages,
     mergeVariants: mergeVariants,
+    medianCellMetrics: medianCellMetrics,
+    inkMask: inkMask,
+    components: components,
     FREQ: FREQ
   };
 })(window);

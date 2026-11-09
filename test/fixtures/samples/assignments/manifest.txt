@@ -1,0 +1,11 @@
+# Synthetic assignment fixtures (no student scans / no copyrighted corpus)
+exam_lined_neat_blue.jpg
+exam_lined_messy_black.jpg
+essay_blank_neat_black.jpg
+essay_blank_messy_green.jpg
+lab_grid_neat_green.jpg
+lab_grid_messy_blue.jpg
+homework_lined_blue_highlight.jpg
+exam_lined_phone_skew_shadow.jpg
+essay_blank_phone_skew.jpg
+lab_grid_phone_shadow.jpg

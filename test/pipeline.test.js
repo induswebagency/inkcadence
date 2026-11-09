@@ -48,7 +48,7 @@ function loadEngines() {
   };
   sandbox.URL = { createObjectURL() { return 'blob:x'; }, revokeObjectURL() {} };
   vm.createContext(sandbox);
-  for (const f of ['js/imaging.js', 'js/glyphs.js', 'js/render.js']) {
+  for (const f of ['js/imaging.js', 'js/glyphs.js', 'js/render.js', 'js/harvest.js', 'js/assignment.js']) {
     vm.runInContext(fs.readFileSync(path.join(PROJECT, f), 'utf8'), sandbox);
   }
   return sandbox;
@@ -152,6 +152,92 @@ async function main() {
     const a3 = sb.Imaging.analyze(page3);
     check('page3 ink ratio sane', a3.inkRatio > 0.001 && a3.inkRatio < 0.2, String(a3.inkRatio));
     check('page3 finds blue-ish pen', a3.palette.some((p) => p.kind === 'pen'), JSON.stringify(a3.palette.slice(0, 2)));
+  }
+
+  /* Diverse synthetic assignment fixtures */
+  const ASSIGN = path.join(FIX, 'assignments');
+  const assignmentFiles = [
+    'exam_lined_neat_blue.jpg',
+    'exam_lined_messy_black.jpg',
+    'essay_blank_neat_black.jpg',
+    'essay_blank_messy_green.jpg',
+    'lab_grid_neat_green.jpg',
+    'lab_grid_messy_blue.jpg',
+    'homework_lined_blue_highlight.jpg',
+    'exam_lined_phone_skew_shadow.jpg',
+    'essay_blank_phone_skew.jpg',
+    'lab_grid_phone_shadow.jpg',
+  ];
+  if (fs.existsSync(ASSIGN)) {
+    console.log('\n-- pipeline: assignment fixtures --');
+    check('assignment fixture count', assignmentFiles.every((f) => fs.existsSync(path.join(ASSIGN, f))),
+      assignmentFiles.filter((f) => !fs.existsSync(path.join(ASSIGN, f))).join(','));
+
+    const harvestCounts = [];
+    for (const name of assignmentFiles) {
+      const c = await toCanvas(path.join(ASSIGN, name));
+      const a = sb.Imaging.analyze(c);
+      check(name + ' has ink', a.inkRatio > 0.0008 && a.inkRatio < 0.25, String(a.inkRatio));
+      check(name + ' stroke sane', a.strokeWidth >= 1 && a.strokeWidth <= 30, String(a.strokeWidth));
+      check(name + ' finds pen/marker', a.palette.some((p) => p.kind === 'pen' || p.kind === 'marker'),
+        JSON.stringify(a.palette.slice(0, 3)));
+      if (name.includes('phone')) {
+        check(name + ' paper still light', /^#[0-9a-f]{6}$/i.test(a.paper));
+      }
+      if (sb.Harvest) {
+        const crops = sb.Harvest.harvestFromPages([c], { maxCrops: 80, maxPerChar: 3 });
+        harvestCounts.push(crops.length);
+        check(name + ' harvests letter crops', crops.length >= 8, String(crops.length));
+        check(name + ' harvest crops labeled', crops.every((g) => g.ch && g.url), 'labels');
+      }
+    }
+    if (harvestCounts.length) {
+      const minH = Math.min(...harvestCounts);
+      const maxH = Math.max(...harvestCounts);
+      console.log('  info harvest range', minH, '..', maxH);
+      check('harvest yields crops across fixtures', minH >= 8 && maxH >= 15, 'min=' + minH + ' max=' + maxH);
+    }
+
+    /* Render using harvest-only pack from lined exam */
+    const exam = await toCanvas(path.join(ASSIGN, 'exam_lined_neat_blue.jpg'));
+    const examStats = sb.Imaging.analyze(exam);
+    const examCrops = sb.Harvest.harvestFromPages([exam], { maxCrops: 100, maxPerChar: 4 });
+    await sb.Glyphs.hydrate({ glyphs: examCrops });
+    const harvestPack = {
+      name: 'harvest-exam',
+      glyphs: examCrops,
+      cellH: (sb.Harvest.medianCellMetrics(examCrops) || {}).cellH || 92,
+      cellW: (sb.Harvest.medianCellMetrics(examCrops) || {}).cellW || 70,
+      slant: examStats.slant,
+      strokeWidth: examStats.strokeWidth,
+      lineGap: examStats.lineGap,
+      paper: examStats.paper,
+      paperStyle: examStats.paperStyle || 'ruled',
+      patterns: examStats.patterns,
+      penColours: (examStats.palette || []).filter((p) => p.kind === 'pen').map((p) => p.hex),
+    };
+    if (!harvestPack.penColours.length) harvestPack.penColours = ['#1c378c'];
+    const harvestPages = sb.Rendering.renderPages({
+      pack: harvestPack,
+      text: '# Midterm\nHomeostasis keeps internal conditions stable.\nThe active site shape matches one substrate.',
+      size: 34,
+      seed: 11,
+      penColour: harvestPack.penColours[0],
+      paperColour: harvestPack.paper,
+      paper: harvestPack.paperStyle || 'ruled',
+      watermark: false,
+    });
+    check('harvest-only render pages', harvestPages.length >= 1, String(harvestPages.length));
+    const hbuf = harvestPages[0].toBuffer('image/png');
+    fs.writeFileSync(path.join(OUT, 'rendered_from_harvest.png'), hbuf);
+    check('harvest render has bytes', hbuf.length > 15000, String(hbuf.length));
+
+    if (sb.Assignment) {
+      const scored = sb.Assignment.styleScore(examStats);
+      check('assignment styleScore in range', scored.score >= 12 && scored.score <= 98, String(scored.score));
+    }
+  } else {
+    console.log('  skip assignment fixtures (run npm run fixtures:assignments)');
   }
 
   await sb.Glyphs.hydrate({ glyphs: exact.glyphs });

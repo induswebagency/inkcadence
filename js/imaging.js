@@ -69,7 +69,7 @@
     return ink;
   }
 
-  /* Colour-aware ink: dark enough, not bright highlighter streaks. */
+  /* Colour-aware ink: dark pens (black/blue/green), not highlighter or ruled print. */
   function inkMaskRGBA(data, w, h, th) {
     var ink = new Uint8Array(w * h);
     for (var i = 0, p = 0; i < data.length; i += 4, p++) {
@@ -81,6 +81,16 @@
       /* Drop fluorescent highlighter / marker washes (bright + saturated). */
       if (lum > 140 && sat > 0.28) { ink[p] = 0; continue; }
       if (lum > 165) { ink[p] = 0; continue; }
+      /* Pale ruled / grid lines (light blue-grey print, not pen). */
+      if (lum > 148 && b >= r - 4 && b >= g - 4 && sat < 0.32 && lum > th - 35) {
+        ink[p] = 0;
+        continue;
+      }
+      /* Soft phone-photo shadow fringe: mid-dark, nearly grey, not chromatic ink. */
+      if (lum > 120 && sat < 0.06 && Math.abs(r - g) < 12 && Math.abs(g - b) < 12) {
+        ink[p] = 0;
+        continue;
+      }
       ink[p] = 1;
     }
     return ink;
@@ -221,13 +231,71 @@
 
   function paperColour(data, w, h) {
     var r = 0, g = 0, b = 0, n = 0;
-    for (var i = 0; i < data.length; i += 16) {
-      var R = data[i], G = data[i + 1], B = data[i + 2];
-      var lum = 0.299 * R + 0.587 * G + 0.114 * B;
-      if (lum > 205 && Math.max(R, G, B) - Math.min(R, G, B) < 40) { r += R; g += G; b += B; n++; }
+    /* Prefer centre crop so phone vignette / desk edges do not tint paper. */
+    var x0 = Math.floor(w * 0.12), x1 = Math.floor(w * 0.88);
+    var y0 = Math.floor(h * 0.1), y1 = Math.floor(h * 0.9);
+    for (var y = y0; y < y1; y += 3) {
+      for (var x = x0; x < x1; x += 3) {
+        var i = (y * w + x) * 4;
+        var R = data[i], G = data[i + 1], B = data[i + 2];
+        var lum = 0.299 * R + 0.587 * G + 0.114 * B;
+        if (lum > 200 && Math.max(R, G, B) - Math.min(R, G, B) < 42) {
+          r += R; g += G; b += B; n++;
+        }
+      }
     }
     if (!n) return '#fdfcf7';
     return rgbToHex(r / n, g / n, b / n);
+  }
+
+  /* Guess printed paper style from residual light structure after ink mask. */
+  function guessPaperStyle(data, ink, w, h) {
+    var rowPeaks = 0, colPeaks = 0;
+    var y, x, s, prev, mx;
+    var rowE = new Float32Array(h);
+    mx = 0;
+    for (y = 0; y < h; y++) {
+      s = 0;
+      for (x = 0; x < w; x += 2) {
+        var i = (y * w + x) * 4;
+        var lum = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+        /* Light structure that is NOT ink (rules / grid). */
+        if (!ink[y * w + x] && lum < 210 && lum > 140) s++;
+      }
+      rowE[y] = s;
+      if (s > mx) mx = s;
+    }
+    if (mx > 0) {
+      prev = 0;
+      for (y = 1; y < h - 1; y++) {
+        if (rowE[y] > mx * 0.45 && rowE[y] >= rowE[y - 1] && rowE[y] >= rowE[y + 1]) {
+          if (y - prev > 12) { rowPeaks++; prev = y; }
+        }
+      }
+    }
+    var colE = new Float32Array(w);
+    mx = 0;
+    for (x = 0; x < w; x++) {
+      s = 0;
+      for (y = 0; y < h; y += 2) {
+        var ci = (y * w + x) * 4;
+        var clum = 0.299 * data[ci] + 0.587 * data[ci + 1] + 0.114 * data[ci + 2];
+        if (!ink[y * w + x] && clum < 210 && clum > 140) s++;
+      }
+      colE[x] = s;
+      if (s > mx) mx = s;
+    }
+    if (mx > 0) {
+      prev = 0;
+      for (x = 1; x < w - 1; x++) {
+        if (colE[x] > mx * 0.45 && colE[x] >= colE[x - 1] && colE[x] >= colE[x + 1]) {
+          if (x - prev > 12) { colPeaks++; prev = x; }
+        }
+      }
+    }
+    if (rowPeaks >= 8 && colPeaks >= 8) return 'grid';
+    if (rowPeaks >= 8) return 'ruled';
+    return 'plain';
   }
 
   function deskewGray(gray, w, h, slant) {
@@ -272,7 +340,8 @@
 
   function analyze(srcCanvas) {
     var g = toGrayscale(srcCanvas, 1400);
-    var th = Math.min(otsu(g.hist), 175);
+    /* Slightly higher cap helps blue/green pens on cream paper under phone JPEG. */
+    var th = Math.min(otsu(g.hist), 182);
     var ink = inkMaskRGBA(g.data, g.w, g.h, th);
     var slant = estimateSlant(ink, g.w, g.h);
     /* Extreme slant is almost always a polluted mask — clamp for style packs. */
@@ -295,6 +364,7 @@
     var strokeWidth = estimateStroke(ink2, deskewed.w, deskewed.h);
     var conf = +strokeConfidence(ink2, deskewed.w, deskewed.h, strokeWidth).toFixed(3);
     var patterns = estimatePatterns(ink2, deskewed.w, deskewed.h, lines, conf, slant);
+    patterns.paperStyle = guessPaperStyle(g.data, ink, g.w, g.h);
 
     var thumb = canvas(420, 420 * g.h / g.w);
     thumb.getContext('2d').drawImage(g.canvas, 0, 0, thumb.width, thumb.height);
@@ -310,6 +380,7 @@
       lineGap: lines.gap,
       lineBands: lines.bands,
       paper: paperColour(g.data, g.w, g.h),
+      paperStyle: patterns.paperStyle,
       palette: palette,
       patterns: patterns,
       thumb: thumb.toDataURL('image/jpeg', 0.6)
@@ -375,15 +446,21 @@
 
     var paper = Object.keys(paperVotes).sort(function (a, b) { return paperVotes[b] - paperVotes[a]; })[0];
     var neatVals = [], headingVotes = { strong: 0, medium: 0, none: 0 };
+    var styleVotes = { ruled: 0, grid: 0, plain: 0 };
     list.forEach(function (a) {
       if (a.patterns) {
         if (a.patterns.neatness != null) neatVals.push(a.patterns.neatness);
         if (a.patterns.headingWeight) headingVotes[a.patterns.headingWeight] = (headingVotes[a.patterns.headingWeight] || 0) + 1;
+        if (a.patterns.paperStyle) styleVotes[a.patterns.paperStyle] = (styleVotes[a.patterns.paperStyle] || 0) + 1;
       }
+      if (a.paperStyle) styleVotes[a.paperStyle] = (styleVotes[a.paperStyle] || 0) + 1;
     });
     var headingWeight = Object.keys(headingVotes).sort(function (a, b) {
       return headingVotes[b] - headingVotes[a];
     })[0] || 'medium';
+    var paperStyle = Object.keys(styleVotes).sort(function (a, b) {
+      return styleVotes[b] - styleVotes[a];
+    })[0] || 'ruled';
     var neatness = neatVals.length ? +median(neatVals.slice()).toFixed(3) : (confs.length ? +median(confs.slice()).toFixed(3) : 0.5);
     return {
       pages: list.length,
@@ -393,10 +470,12 @@
       lineGap: median(gaps.slice()),
       inkRatio: +median(ratios.slice()).toFixed(4),
       paper: paper || '#fdfcf7',
+      paperStyle: paperStyle,
       palette: palette,
       patterns: {
         neatness: neatness,
         headingWeight: headingWeight,
+        paperStyle: paperStyle,
         qualityGuess: neatness >= 0.72 ? 'best' : 'normal'
       },
       thumbs: list.map(function (a) { return a.thumb; })
@@ -412,6 +491,7 @@
     otsu: otsu,
     deskewGray: deskewGray,
     strokeConfidence: strokeConfidence,
-    inkMaskRGBA: inkMaskRGBA
+    inkMaskRGBA: inkMaskRGBA,
+    guessPaperStyle: guessPaperStyle
   };
 })(window);

@@ -263,8 +263,16 @@
     var text = opts.text || '';
     var size = opts.size || 34;
     var jitter = opts.jitter == null ? 0.55 : opts.jitter;
+    /* Neat pages from training → calmer hand; messy → more drift. */
+    var pats = (pack.patterns || (pack.stats && pack.stats.patterns) || {});
+    if (opts.jitter == null && pats.neatness != null) {
+      jitter = pats.neatness >= 0.72 ? 0.28 : (pats.neatness >= 0.5 ? 0.48 : 0.72);
+    }
+    if (opts.jitter == null && pack.defaultJitter != null && pats.neatness == null) {
+      jitter = pack.defaultJitter;
+    }
     var colour = opts.penColour || '#1b2a4a';
-    var paperStyle = opts.paper || 'ruled';
+    var paperStyle = opts.paper || pack.paperStyle || (pats.paperStyle) || 'ruled';
     var paperColour = opts.paperColour || '#fdfcf7';
     var family = opts.fontFamily || pack.fontFamily || '"Segoe Script","Ink Free",cursive';
     var tracking = opts.tracking != null ? opts.tracking : (pack.tracking != null ? pack.tracking : 0.8);

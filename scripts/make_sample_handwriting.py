@@ -15,10 +15,23 @@ FONT_PATHS = [
     r"C:\Windows\Fonts\LHANDW.TTF",
     r"C:\Windows\Fonts\FRSCRIPT.TTF",
     r"C:\Windows\Fonts\comic.ttf",
+    "/usr/share/fonts/truetype/liberation/LiberationSerif-Italic.ttf",
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Italic.ttf",
+    "/usr/share/fonts/truetype/croscore/Tinos-Italic.ttf",
+    "/usr/share/fonts/truetype/croscore/Arimo-Italic.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSerif-Italic.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Oblique.ttf",
+]
+TAG_FONT_PATHS = [
+    r"C:\Windows\Fonts\arial.ttf",
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    "/usr/share/fonts/truetype/croscore/Arimo-Regular.ttf",
 ]
 fonts = [p for p in FONT_PATHS if os.path.exists(p)]
 if not fonts:
     raise SystemExit("No handwriting-like fonts found on this machine.")
+tag_font_path = next((p for p in TAG_FONT_PATHS if os.path.exists(p)), None)
 
 CHARS = (
     "abcdefghijklmnopqrstuvwxyz"
@@ -115,7 +128,7 @@ def make_sheet(path: str, seed: int = 3) -> None:
     font = ImageFont.truetype(fonts[0], int(ch * 0.55))
     ink = (18, 26, 55)
     soft = set(".,!?-:;\"'()/&@#+*=")
-    tagf = ImageFont.truetype(r"C:\Windows\Fonts\arial.ttf", 12)
+    tagf = ImageFont.truetype(tag_font_path, 12) if tag_font_path else ImageFont.load_default()
     for r in range(ROWS):
         for c in range(COLS):
             idx = r * COLS + c
