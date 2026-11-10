@@ -7,3 +7,7 @@ pillow==10.4.0
 numpy==1.26.4
 # torch is optional for CPU personalization; install separately for GPU:
 #   pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+# CharCNN training
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+# python ml/train_char_cnn.py

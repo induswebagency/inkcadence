@@ -463,6 +463,7 @@
     card($('buildMsg'), 'Reading ink, slant, spacing and heading patterns…');
 
     setTimeout(function () {
+      (async function () {
       try {
         var analyses = S.refImages.map(function (c) { return Imaging.analyze(c); });
         var stats = Imaging.mergeAnalyses(analyses);
@@ -485,7 +486,11 @@
         var harvested = [];
         var hadSheetGlyphs = glyphs.length > 0;
         if (window.Harvest && S.refImages.length) {
-          harvested = Harvest.harvestFromPages(S.refImages, { maxCrops: 120, maxPerChar: 4 });
+          card($('buildMsg'), 'Recognising letters with the handwriting CNN…');
+          if (window.CharCNN && !CharCNN.isReady()) {
+            try { await CharCNN.load(); } catch (e) { /* harvest may be empty */ }
+          }
+          harvested = await Harvest.harvestFromPagesAsync(S.refImages, { maxCrops: 120, maxPerChar: 4 });
           glyphs = Harvest.mergeVariants(glyphs, harvested);
           /* Only adopt harvested cell metrics when there is no alphabet sheet. */
           if (!hadSheetGlyphs && harvested.length) {
@@ -576,6 +581,7 @@
         $('buildState').textContent = '';
         card($('buildMsg'), 'Analysis failed: ' + e.message, 'bad');
       }
+      })();
     }, 30);
   };
 
@@ -891,6 +897,11 @@
   fillBaseStyleSelect();
   fillLayoutSelect();
   applyLayoutPreset();
+  if (window.CharCNN) {
+    CharCNN.load().catch(function (err) {
+      console.warn('[CharCNN]', err && err.message ? err.message : err);
+    });
+  }
   Promise.resolve(Store.ready).then(function () {
     syncAccountMode();
     return Store.currentUser();

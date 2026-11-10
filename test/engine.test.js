@@ -102,6 +102,7 @@ const sb = fakeDom();
 loadIife('js/imaging.js', sb);
 loadIife('js/glyphs.js', sb);
 loadIife('js/render.js', sb);
+loadIife('js/charcnn.js', sb);
 loadIife('js/harvest.js', sb);
 loadIife('js/assignment.js', sb);
 
@@ -109,6 +110,8 @@ check('Imaging exported', !!sb.Imaging && typeof sb.Imaging.otsu === 'function')
 check('Glyphs exported', !!sb.Glyphs && sb.Glyphs.CHARS.length > 50);
 check('Rendering exported', !!sb.Rendering && typeof sb.Rendering.renderPages === 'function');
 check('Harvest exported', !!sb.Harvest && typeof sb.Harvest.harvestFromPages === 'function');
+check('Harvest.harvestFromPagesAsync', typeof sb.Harvest.harvestFromPagesAsync === 'function');
+check('CharCNN exported', !!sb.CharCNN && typeof sb.CharCNN.load === 'function');
 check('Assignment exported', !!sb.Assignment && typeof sb.Assignment.styleScore === 'function');
 check('Harvest.medianCellMetrics', typeof sb.Harvest.medianCellMetrics === 'function');
 check('Imaging.guessPaperStyle', typeof sb.Imaging.guessPaperStyle === 'function');

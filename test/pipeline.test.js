@@ -48,8 +48,18 @@ function loadEngines() {
   };
   sandbox.URL = { createObjectURL() { return 'blob:x'; }, revokeObjectURL() {} };
   vm.createContext(sandbox);
-  for (const f of ['js/imaging.js', 'js/glyphs.js', 'js/render.js', 'js/harvest.js', 'js/assignment.js']) {
+  for (const f of ['js/imaging.js', 'js/glyphs.js', 'js/render.js', 'js/charcnn.js', 'js/harvest.js', 'js/assignment.js']) {
     vm.runInContext(fs.readFileSync(path.join(PROJECT, f), 'utf8'), sandbox);
+  }
+  const weightsPath = path.join(PROJECT, 'assets', 'charcnn.json');
+  if (fs.existsSync(weightsPath) && sandbox.CharCNN) {
+    const raw = JSON.parse(fs.readFileSync(weightsPath, 'utf8'));
+    sandbox.fetch = async function (url) {
+      if (String(url).indexOf('charcnn') >= 0) {
+        return { ok: true, json: async () => raw };
+      }
+      return { ok: false, status: 404, json: async () => ({}) };
+    };
   }
   return sandbox;
 }
@@ -185,7 +195,12 @@ async function main() {
         check(name + ' paper still light', /^#[0-9a-f]{6}$/i.test(a.paper));
       }
       if (sb.Harvest) {
-        const crops = sb.Harvest.harvestFromPages([c], { maxCrops: 80, maxPerChar: 3 });
+        if (sb.CharCNN && !sb.CharCNN.isReady()) {
+          try { await sb.CharCNN.load(['assets/charcnn.json']); } catch (_) { /* freq fallback */ }
+        }
+        const crops = sb.CharCNN && sb.CharCNN.isReady()
+          ? await sb.Harvest.harvestFromPagesAsync([c], { maxCrops: 80, maxPerChar: 3 })
+          : sb.Harvest.harvestFromPages([c], { maxCrops: 80, maxPerChar: 3, allowFreqFallback: true });
         harvestCounts.push(crops.length);
         check(name + ' harvests letter crops', crops.length >= 8, String(crops.length));
         check(name + ' harvest crops labeled', crops.every((g) => g.ch && g.url), 'labels');
@@ -201,7 +216,9 @@ async function main() {
     /* Render using harvest-only pack from lined exam */
     const exam = await toCanvas(path.join(ASSIGN, 'exam_lined_neat_blue.jpg'));
     const examStats = sb.Imaging.analyze(exam);
-    const examCrops = sb.Harvest.harvestFromPages([exam], { maxCrops: 100, maxPerChar: 4 });
+    const examCrops = sb.CharCNN && sb.CharCNN.isReady()
+      ? await sb.Harvest.harvestFromPagesAsync([exam], { maxCrops: 100, maxPerChar: 4 })
+      : sb.Harvest.harvestFromPages([exam], { maxCrops: 100, maxPerChar: 4, allowFreqFallback: true });
     await sb.Glyphs.hydrate({ glyphs: examCrops });
     const harvestPack = {
       name: 'harvest-exam',

@@ -309,6 +309,54 @@ def infer(req: InferRequest):
     return {"pages": pages, "glyphs": None, "fallback": False, "metrics": model.get("metrics")}
 
 
+class RecognizeRequest(BaseModel):
+    images: List[str] = Field(default_factory=list)
+    topK: int = 1
+
+
+@APP.post("/recognize")
+def recognize(req: RecognizeRequest):
+    """Classify glyph crops with CharCNN (server-side fallback)."""
+    try:
+        import torch
+        from char_cnn import CharCNN, EMNIST_BYCLASS_LABELS, INPUT_SIZE
+    except Exception as exc:
+        raise HTTPException(503, f"charcnn_unavailable:{exc}") from exc
+
+    ckpt_path = ARTIFACT_DIR / "charcnn.pt"
+    if not ckpt_path.exists():
+        raise HTTPException(503, "charcnn_not_trained")
+
+    device = torch.device("cpu")
+    model = CharCNN(len(EMNIST_BYCLASS_LABELS))
+    blob = torch.load(ckpt_path, map_location=device, weights_only=False)
+    model.load_state_dict(blob["model"] if isinstance(blob, dict) and "model" in blob else blob)
+    model.eval()
+
+    out: List[Dict[str, Any]] = []
+    for raw in req.images[:64]:
+        try:
+            if "," in raw[:64]:
+                raw = raw.split(",", 1)[1]
+            buf = base64.b64decode(raw)
+            img = Image.open(io.BytesIO(buf)).convert("L")
+            img = img.resize((INPUT_SIZE, INPUT_SIZE), Image.Resampling.BILINEAR)
+            import numpy as np
+
+            arr = np.asarray(img, dtype=np.float32)
+            if arr.mean() > 127:
+                arr = 255.0 - arr
+            t = torch.from_numpy(arr / 255.0).unsqueeze(0).unsqueeze(0)
+            with torch.no_grad():
+                logits = model(t)
+                prob = torch.softmax(logits, dim=1)[0]
+                conf, idx = torch.max(prob, 0)
+            out.append({"ch": EMNIST_BYCLASS_LABELS[int(idx.item())], "conf": float(conf.item())})
+        except Exception as exc:
+            out.append({"ch": None, "conf": 0.0, "error": str(exc)})
+    return {"predictions": out}
+
+
 def main():
     import uvicorn
 

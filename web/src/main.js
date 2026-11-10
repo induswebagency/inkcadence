@@ -5,11 +5,16 @@ import { Imaging } from './lib/imaging.js';
 import { Glyphs } from './lib/glyphs.js';
 import { Rendering } from './lib/render.js';
 import { Presets } from './lib/presets.js';
+import { CharCNN } from './lib/charcnn.js';
 import { Harvest } from './lib/harvest.js';
 import { Assignment } from './lib/assignment.js';
 import { PackShare } from './lib/packshare.js';
 import { packQuality, tryPhrase } from './lib/qa.js';
 import { INKCADENCE_CONFIG } from './lib/config.js';
+
+CharCNN.load(['/charcnn.json', 'charcnn.json']).catch(function (err) {
+  console.warn('[CharCNN]', err && err.message ? err.message : err);
+});
 
 const root = document.getElementById('app');
 
@@ -603,7 +608,7 @@ function drawSheetPreview() {
   $('#sheetWrap').hidden = false;
 }
 
-function buildDraftPack() {
+async function buildDraftPack() {
   const name = $('#packName').value.trim() || 'Untitled pack';
   let stats = null;
   if (S.refImages.length) {
@@ -621,7 +626,10 @@ function buildDraftPack() {
   let harvested = [];
   const hadSheetGlyphs = glyphs.length > 0;
   if (S.refImages.length) {
-    harvested = Harvest.harvestFromPages(S.refImages, { maxCrops: 120, maxPerChar: 4 });
+    if (typeof CharCNN !== 'undefined' && CharCNN.load && !CharCNN.isReady()) {
+      try { await CharCNN.load(['/charcnn.json', 'charcnn.json']); } catch (_) { /* empty harvest */ }
+    }
+    harvested = await Harvest.harvestFromPagesAsync(S.refImages, { maxCrops: 120, maxPerChar: 4 });
     glyphs = Harvest.mergeVariants(glyphs, harvested);
     if (!hadSheetGlyphs && harvested.length) {
       const med = Harvest.medianCellMetrics ? Harvest.medianCellMetrics(harvested) : null;
@@ -772,12 +780,13 @@ function wireApp() {
 
   $('#wizNext1').onclick = () => setWizard(2);
   $('#wizBack2').onclick = () => setWizard(1);
-  $('#wizNext2').onclick = () => {
+  $('#wizNext2').onclick = async () => {
     if (!S.refImages.length && !S.sheetSrc) {
       card($('#buildMsg'), 'Add samples or a sheet first.', 'bad');
       return;
     }
-    const pack = buildDraftPack();
+    card($('#buildMsg'), 'Recognising letters with the handwriting CNN…');
+    const pack = await buildDraftPack();
     showQa(pack);
     setWizard(3);
   };
@@ -812,7 +821,7 @@ function wireApp() {
   };
 
   $('#btnBuild').onclick = async () => {
-    const pack = S.draftPack || buildDraftPack();
+    const pack = S.draftPack || (await buildDraftPack());
     if (!$('#packName').value.trim()) { card($('#buildMsg'), 'Name the pack first.', 'bad'); return; }
     pack.name = $('#packName').value.trim();
     $('#btnBuild').disabled = true;

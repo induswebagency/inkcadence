@@ -25,6 +25,7 @@ const modules = [
   ['glyphs', 'Glyphs'],
   ['render', 'Rendering'],
   ['presets', 'Presets'],
+  ['charcnn', 'CharCNN'],
   ['harvest', 'Harvest'],
   ['assignment', 'Assignment'],
   ['packshare', 'PackShare']

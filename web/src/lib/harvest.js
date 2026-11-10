@@ -185,7 +185,8 @@ var FREQ = 'etaoinshrdlcumwfgypbvkjxqzETAOINSHRDLCUMWFGYPBVKJXQZ0123456789';
     };
   }
 
-  function assignLabels(crops, maxPerChar) {
+  /* CNN labels real handwriting. FREQ cycling is only a last-resort offline stub. */
+  function assignLabelsFreq(crops, maxPerChar) {
     maxPerChar = maxPerChar || 4;
     var glyphs = [];
     var counts = Object.create(null);
@@ -195,10 +196,29 @@ var FREQ = 'etaoinshrdlcumwfgypbvkjxqzETAOINSHRDLCUMWFGYPBVKJXQZ0123456789';
       if ((counts[ch] || 0) >= maxPerChar) continue;
       g = crops[i];
       g.ch = ch;
+      g.freqFallback = true;
       glyphs.push(g);
       counts[ch] = (counts[ch] || 0) + 1;
     }
     return glyphs;
+  }
+
+  function assignLabels(crops, maxPerChar, allowFreqFallback) {
+    if (allowFreqFallback) return assignLabelsFreq(crops, maxPerChar || 4);
+    return [];
+  }
+
+  function assignLabelsAsync(crops, maxPerChar) {
+    maxPerChar = maxPerChar || 4;
+    var cnn = global.CharCNN;
+    if (!cnn) return Promise.resolve([]);
+    var ensure = cnn.isReady() ? Promise.resolve() : cnn.load();
+    return ensure.then(function () {
+      return cnn.labelCrops(crops, maxPerChar);
+    }).catch(function (err) {
+      console.warn('[Harvest] CharCNN label failed:', err && err.message ? err.message : err);
+      return [];
+    });
   }
 
   /* Median cell metrics from harvested crops (for packs without a sheet). */
@@ -212,11 +232,9 @@ var FREQ = 'etaoinshrdlcumwfgypbvkjxqzETAOINSHRDLCUMWFGYPBVKJXQZ0123456789';
     };
   }
 
-  /* Harvest letter crops from one or more assignment canvases. */
-  function harvestFromPages(canvases, opts) {
+  function collectCrops(canvases, opts) {
     opts = opts || {};
     var maxCrops = opts.maxCrops || 120;
-    var maxPerChar = opts.maxPerChar || 4;
     var all = [];
     (canvases || []).forEach(function (src) {
       if (!src) return;
@@ -227,8 +245,25 @@ var FREQ = 'etaoinshrdlcumwfgypbvkjxqzETAOINSHRDLCUMWFGYPBVKJXQZ0123456789';
       });
     });
     all.sort(function (a, b) { return (b.confidence || 0) - (a.confidence || 0); });
-    all = all.slice(0, maxCrops);
-    return assignLabels(all, maxPerChar);
+    return all.slice(0, maxCrops);
+  }
+
+  /* Sync harvest — CNN not available here; pass allowFreqFallback only for legacy tests. */
+  function harvestFromPages(canvases, opts) {
+    opts = opts || {};
+    var all = collectCrops(canvases, opts);
+    return assignLabels(all, opts.maxPerChar || 4, !!opts.allowFreqFallback);
+  }
+
+  /* Preferred: CNN-classify neat/messy human crops from assignment pages. */
+  function harvestFromPagesAsync(canvases, opts) {
+    opts = opts || {};
+    var all = collectCrops(canvases, opts);
+    return assignLabelsAsync(all, opts.maxPerChar || 4).then(function (labeled) {
+      if (labeled.length) return labeled;
+      if (opts.allowFreqFallback) return assignLabelsFreq(all, opts.maxPerChar || 4);
+      return labeled;
+    });
   }
 
   function mergeVariants(baseGlyphs, harvested) {
@@ -248,10 +283,12 @@ var FREQ = 'etaoinshrdlcumwfgypbvkjxqzETAOINSHRDLCUMWFGYPBVKJXQZ0123456789';
 
   const Harvest = {
     harvestFromPages: harvestFromPages,
+    harvestFromPagesAsync: harvestFromPagesAsync,
     mergeVariants: mergeVariants,
     medianCellMetrics: medianCellMetrics,
     inkMask: inkMask,
     components: components,
+    assignLabelsAsync: assignLabelsAsync,
     FREQ: FREQ
   };
 

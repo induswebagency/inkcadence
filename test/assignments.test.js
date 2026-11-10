@@ -81,7 +81,10 @@ async function main() {
 
   const phone = analyses.find((x) => /phone/.test(x.f));
   if (phone) {
-    const crops = sb.Harvest.harvestFromPages([await toCanvas(path.join(FIX, phone.f))], { maxCrops: 40 });
+    const crops = sb.Harvest.harvestFromPages(
+      [await toCanvas(path.join(FIX, phone.f))],
+      { maxCrops: 40, allowFreqFallback: true }
+    );
     check('phone harvest crops', crops.length >= 8, String(crops.length));
   }
 
